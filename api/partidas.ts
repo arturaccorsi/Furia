@@ -43,7 +43,7 @@ async function furiaTeam(slug: string, token: string): Promise<PSTeam | null> {
   if (candidates.length <= 1) return candidates[0] ?? null
   const latest = await Promise.all(
     candidates.map(async (t) => {
-      const [m] = await ps<PSMatch[]>(`/${slug}/matches/past?filter[opponent_id]=${t.id}&per_page=1&sort=-begin_at`, token)
+      const [m] = await ps<PSMatch[]>(`/matches/past?filter[opponent_id]=${t.id}&per_page=1&sort=-begin_at`, token)
       return { t, at: Date.parse(m?.begin_at ?? '') || 0 }
     }),
   )
@@ -85,11 +85,14 @@ export default async function handler() {
         teams[game] = team && { id: team.id, name: team.name }
         if (!team) return errors.push(`FURIA não encontrada em ${game}`)
         const id = team.id
+        // Partidas pelo endpoint geral (/matches), filtrando pelo id do time: o id já
+        // identifica o jogo, e evita depender do slug do jogo (no CS2 o /csgo/matches
+        // pode não trazer as partidas novas).
         const q = `filter[opponent_id]=${id}`
         const [running, next, past] = await Promise.all([
-          ps<PSMatch[]>(`/${slug}/matches/running?${q}&per_page=5`, token),
-          ps<PSMatch[]>(`/${slug}/matches/upcoming?${q}&per_page=10&sort=begin_at`, token),
-          ps<PSMatch[]>(`/${slug}/matches/past?${q}&per_page=6&sort=-begin_at`, token),
+          ps<PSMatch[]>(`/matches/running?${q}&per_page=5`, token),
+          ps<PSMatch[]>(`/matches/upcoming?${q}&per_page=10&sort=begin_at`, token),
+          ps<PSMatch[]>(`/matches/past?${q}&per_page=6&sort=-begin_at`, token),
         ])
         upcoming.push(...[...running, ...next].map((m) => normalize(m, game, id)))
         const done = past.filter((m) => m.status === 'finished')
