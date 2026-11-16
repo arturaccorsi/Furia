@@ -91,6 +91,11 @@ small { font-size: 12px; font-weight: 600; line-height: 1.35; display: block; }
   scroll-padding: var(--gutter);
 }
 .carousel::-webkit-scrollbar { display: none; }
+@media (hover: hover) and (pointer: fine) {
+  .carousel { cursor: grab; }
+  .carousel--dragging { cursor: grabbing; user-select: none; }
+  .carousel--dragging * { pointer-events: none; }
+}
 .carousel > * { flex: 0 0 auto; }
 .carousel--snap { scroll-snap-type: x mandatory; padding-top: 0; }
 .carousel--snap > * { scroll-snap-align: start; }
@@ -466,3 +471,5 @@ small { font-size: 12px; font-weight: 600; line-height: 1.35; display: block; }
 .textarea { resize: vertical; min-height: 110px; font: 500 15px/1.4 var(--f-body); }
 select.input { appearance: none; background: var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23111' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 14px center; padding-right: 36px; font-size: 14px; }
 .right { text-align: right; }
+
+.grid-2 .result-card { width: auto; }

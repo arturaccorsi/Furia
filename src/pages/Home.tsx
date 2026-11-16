@@ -67,7 +67,7 @@ function Banners() {
   }
   return (
     <div className="banners">
-      <div className="carousel carousel--snap" ref={ref} onScroll={onScroll}>
+      <Carousel className="carousel--snap" innerRef={ref} onScroll={onScroll}>
         <article className="banner banner--ink">
           <img src="/img/fallen.webp" alt="FalleN erguendo o troféu" className="banner__photo" />
           <div className="banner__text">
@@ -84,7 +84,7 @@ function Banners() {
             <Button to="/loja">Ver coleção <ArrowRight size={16} /></Button>
           </div>
         </article>
-      </div>
+      </Carousel>
       <div className="dots" aria-hidden="true">
         {[0, 1].map((i) => (
           <span key={i} className={i === idx ? 'dot dot--on' : 'dot'} />

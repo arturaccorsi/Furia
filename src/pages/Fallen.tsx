@@ -91,11 +91,11 @@ export default function Fallen() {
                     <small>{it.body}</small>
                   </div>
                   {it.media && (
-                    <div className="carousel tl__media">
+                    <Carousel className="tl__media">
                       {it.media.map((m) => (
                         <MediaCard key={m.url} m={m} />
                       ))}
-                    </div>
+                    </Carousel>
                   )}
                 </div>
               </li>

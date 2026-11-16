@@ -108,22 +108,17 @@ function ReminderButton({ id }: { id: string }) {
 
 function CheckinCard({ match }: { match: M }) {
   const { checkins } = useStore()
-  const [status, setStatus] = useState<'idle' | 'checking' | 'error'>('idle')
+  const [status, setStatus] = useState<'idle' | 'checking'>('idle')
   const done = checkins.includes(match.id)
   const open = !!match.live || matchStart(match) - Date.now() <= 3_600_000
 
+  // Protótipo: simula a confirmação da localização, sem pedir permissão ao navegador.
   const checkin = () => {
-    if (!('geolocation' in navigator)) return setStatus('error')
     setStatus('checking')
-    navigator.geolocation.getCurrentPosition(
-      // Protótipo: aceita qualquer localização. Na versão real, comparar com o raio da arena.
-      () => {
-        actions.checkin(match.id)
-        setStatus('idle')
-      },
-      () => setStatus('error'),
-      { timeout: 10000 },
-    )
+    setTimeout(() => {
+      actions.checkin(match.id)
+      setStatus('idle')
+    }, 1200)
   }
 
   return (
@@ -148,9 +143,7 @@ function CheckinCard({ match }: { match: M }) {
             <MapPin size={16} /> {status === 'checking' ? 'Confirmando…' : 'Estou na arena'}
           </Button>
           <small className="muted">
-            {status === 'error'
-              ? 'Não conseguimos ler sua localização. Libere o acesso no navegador e tente de novo.'
-              : 'Usamos sua localização só neste momento, pra confirmar que você está no local do jogo.'}
+            Usamos sua localização só neste momento, pra confirmar que você está no local do jogo.
           </small>
         </>
       )}

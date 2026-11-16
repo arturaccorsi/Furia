@@ -1,4 +1,4 @@
-import { ReactNode, useEffect } from 'react'
+import { ReactNode, RefObject, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, Bell, CalendarDays, ChevronLeft, Play, ShoppingBag, User, X } from 'lucide-react'
 import { Achievement, GAME_LOGO, Game, Match, Media, Result, TEAMS, TeamId } from './data'
@@ -237,8 +237,86 @@ export function MediaCard({ m, wide }: { m: Media; wide?: boolean }) {
   )
 }
 
-export function Carousel({ children }: { children: ReactNode }) {
-  return <div className="carousel">{children}</div>
+/**
+ * Arrastar com o mouse (no celular o toque já rola nativamente).
+ * Depois de arrastar, o clique é cancelado para não abrir o card sem querer.
+ */
+export function useDragScroll(ref: RefObject<HTMLElement>) {
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    let startX = 0
+    let startLeft = 0
+    let dragging = false
+    let moved = false
+    let snap = ''
+
+    const down = (e: PointerEvent) => {
+      if (e.pointerType !== 'mouse' || e.button !== 0) return
+      dragging = true
+      moved = false
+      startX = e.clientX
+      startLeft = el.scrollLeft
+    }
+    const move = (e: PointerEvent) => {
+      if (!dragging) return
+      const dx = e.clientX - startX
+      if (!moved && Math.abs(dx) > 4) {
+        moved = true
+        snap = el.style.scrollSnapType
+        el.style.scrollSnapType = 'none'
+        el.style.scrollBehavior = 'auto'
+        el.classList.add('carousel--dragging')
+      }
+      if (moved) el.scrollLeft = startLeft - dx
+    }
+    const up = () => {
+      if (!dragging) return
+      dragging = false
+      if (!moved) return
+      el.classList.remove('carousel--dragging')
+      el.style.scrollSnapType = snap
+      el.style.scrollBehavior = ''
+      // reencaixa no card mais próximo quando o carrossel usa snap
+      const first = el.firstElementChild as HTMLElement | null
+      if (first && getComputedStyle(el).scrollSnapType !== 'none') {
+        const step = first.offsetWidth + parseFloat(getComputedStyle(el).columnGap || '0')
+        el.scrollTo({ left: Math.round(el.scrollLeft / step) * step, behavior: 'smooth' })
+      }
+    }
+    const click = (e: MouseEvent) => {
+      if (moved) {
+        e.preventDefault()
+        e.stopPropagation()
+        moved = false
+      }
+    }
+    const noDrag = (e: DragEvent) => e.preventDefault()
+
+    el.addEventListener('pointerdown', down)
+    window.addEventListener('pointermove', move)
+    window.addEventListener('pointerup', up)
+    el.addEventListener('click', click, true)
+    el.addEventListener('dragstart', noDrag)
+    return () => {
+      el.removeEventListener('pointerdown', down)
+      window.removeEventListener('pointermove', move)
+      window.removeEventListener('pointerup', up)
+      el.removeEventListener('click', click, true)
+      el.removeEventListener('dragstart', noDrag)
+    }
+  }, [ref])
+}
+
+export function Carousel({ children, className = '', onScroll, innerRef }: { children: ReactNode; className?: string; onScroll?: () => void; innerRef?: RefObject<HTMLDivElement> }) {
+  const own = useRef<HTMLDivElement>(null)
+  const ref = innerRef ?? own
+  useDragScroll(ref)
+  return (
+    <div className={`carousel ${className}`} ref={ref} onScroll={onScroll}>
+      {children}
+    </div>
+  )
 }
 
 export function TabBar() {
