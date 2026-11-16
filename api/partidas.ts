@@ -5,8 +5,9 @@
 export const config = { runtime: 'edge' }
 
 const API = 'https://api.pandascore.co'
-// slug da PandaScore -> nome usado no site
-const GAMES: Record<string, 'CS2' | 'LoL' | 'Valorant'> = { csgo: 'CS2', lol: 'LoL', valorant: 'Valorant' }
+// jogo do site -> slugs da PandaScore onde procurar o time (o primeiro é o atual).
+// No Counter-Strike, o CS2 tem cadastro próprio ("cs2"); "csgo" fica como reserva.
+const GAMES: Record<'CS2' | 'LoL' | 'Valorant', string[]> = { CS2: ['cs2', 'csgo'], LoL: ['lol'], Valorant: ['valorant'] }
 
 type PSTeam = { id: number; name: string; acronym?: string | null; image_url?: string | null }
 type PSMatch = {
@@ -37,9 +38,15 @@ const NOT_MAIN = /academy|fe\b|female|women|feminino|youth|junior|\bjr\b|\b2\b/i
  * cadastro com o nome (times antigos, academy, feminino): entre os candidatos,
  * fica com o que jogou mais recentemente.
  */
-async function furiaTeam(slug: string, token: string): Promise<PSTeam | null> {
-  const teams = await ps<PSTeam[]>(`/${slug}/teams?search[name]=FURIA&per_page=50`, token)
-  const candidates = teams.filter((t) => /^furia/i.test(t.name.trim()) && !NOT_MAIN.test(t.name))
+async function furiaTeam(slugs: string[], token: string): Promise<PSTeam | null> {
+  const found = await Promise.all(
+    slugs.map((slug) => ps<PSTeam[]>(`/${slug}/teams?search[name]=FURIA&per_page=50`, token).catch(() => [] as PSTeam[])),
+  )
+  const seen = new Set<number>()
+  const candidates = found
+    .flat()
+    .filter((t) => /^furia/i.test(t.name.trim()) && !NOT_MAIN.test(t.name))
+    .filter((t) => !seen.has(t.id) && seen.add(t.id))
   if (candidates.length <= 1) return candidates[0] ?? null
   const latest = await Promise.all(
     candidates.map(async (t) => {
@@ -79,9 +86,9 @@ export default async function handler() {
   const teams: Record<string, { id: number; name: string } | null> = {}
 
   await Promise.all(
-    Object.entries(GAMES).map(async ([slug, game]) => {
+    (Object.entries(GAMES) as [keyof typeof GAMES, string[]][]).map(async ([game, slugs]) => {
       try {
-        const team = await furiaTeam(slug, token)
+        const team = await furiaTeam(slugs, token)
         teams[game] = team && { id: team.id, name: team.name }
         if (!team) return errors.push(`FURIA não encontrada em ${game}`)
         const id = team.id
