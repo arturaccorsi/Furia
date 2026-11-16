@@ -77,7 +77,15 @@ export function useMatchData(): Data & { retry: () => void } {
   return { ...data, retry }
 }
 
-/** Partidas para a agenda: reais quando houver, senão os placeholders. */
+/**
+ * Quando a PandaScore responde sem nenhum jogo marcado:
+ * true = mostra a agenda de exemplo; false = mostra "Ainda não há jogos marcados".
+ */
+export const USE_PLACEHOLDER_WHEN_EMPTY = true
+
+/** Partidas para a agenda: reais quando houver, senão os placeholders (ou vazio). */
 export function agendaMatches(d: Data): { list: Match[]; placeholder: boolean } {
-  return d.source === 'pandascore' && d.matches.length ? { list: d.matches, placeholder: false } : { list: MATCHES, placeholder: true }
+  if (d.source === 'pandascore' && d.matches.length) return { list: d.matches, placeholder: false }
+  if (d.source === 'pandascore' && !USE_PLACEHOLDER_WHEN_EMPTY) return { list: [], placeholder: false }
+  return { list: MATCHES, placeholder: true }
 }

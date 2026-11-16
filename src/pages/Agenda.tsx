@@ -51,9 +51,9 @@ export default function Agenda() {
       {tab === 'proximos' ? (
         matches.length === 0 ? (
           <EmptyState
-            art={game ? <img src={GAME_LOGO[game]} alt="" /> : undefined}
-            title={game ? `Sem jogos de ${game} marcados` : 'Nenhum jogo marcado'}
-            text={game ? `Assim que a FURIA tiver partida de ${game}, ela aparece aqui.` : 'Assim que a FURIA tiver partidas nas suas modalidades, elas aparecem aqui.'}
+            art={<img src={game ? GAME_LOGO[game] : '/img/furia-logo.webp'} alt="" />}
+            title={game ? `Sem jogos de ${game} marcados` : 'Ainda não há jogos marcados'}
+            text={game ? `Assim que a FURIA tiver partida de ${game}, ela aparece aqui.` : 'A FURIA ainda não tem partidas agendadas nas suas modalidades. Volte mais tarde: a agenda atualiza assim que os campeonatos divulgam os horários.'}
             actions={
               <>
                 <Button variant="secondary" onClick={() => set('aba', 'resultados')}>{game ? `Ver resultados de ${game}` : 'Ver resultados'}</Button>

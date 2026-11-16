@@ -25,18 +25,27 @@ export default function Home() {
       <div className="greeting">
         <h1 className="display-l">Hoje é dia de FURIA!</h1>
         <p className="caption muted">
-          E aí, {name} · {today.length} {today.length === 1 ? 'jogo' : 'jogos'} hoje{live ? ` · ${live} ao vivo agora` : ''}
+          E aí, {name} · {today.length ? `${today.length} ${today.length === 1 ? 'jogo' : 'jogos'} hoje` : 'nenhum jogo hoje'}{live ? ` · ${live} ao vivo agora` : ''}
         </p>
       </div>
 
       <Banners />
 
       <Section title="Ao vivo e próximos" link={{ to: '/agenda', label: 'Ver agenda' }}>
-        <Carousel>
-          {upcoming.slice(0, 3).map((m) => (
-            <MatchCard key={m.id} match={m} />
-          ))}
-        </Carousel>
+        {upcoming.length ? (
+          <Carousel>
+            {upcoming.slice(0, 3).map((m) => (
+              <MatchCard key={m.id} match={m} />
+            ))}
+          </Carousel>
+        ) : (
+          <EmptyState
+            art={<img src="/img/furia-logo.webp" alt="" />}
+            title="Ainda não há jogos marcados"
+            text="A FURIA ainda não tem partidas agendadas nas suas modalidades. Volte mais tarde: a agenda atualiza assim que os campeonatos divulgam os horários."
+            actions={<Button variant="secondary" to="/agenda?aba=resultados">Ver últimos resultados</Button>}
+          />
+        )}
       </Section>
 
       <Section title="Conquistas" link={{ to: '/perfil#conquistas', label: 'Ver todas' }}>
