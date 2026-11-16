@@ -6,7 +6,7 @@ import Welcome from './pages/Welcome'
 import Home from './pages/Home'
 import Match from './pages/Match'
 import Fallen from './pages/Fallen'
-import { Product, Shop } from './pages/Shop'
+import { Shop } from './pages/Shop'
 import Profile from './pages/Profile'
 import Agenda from './pages/Agenda'
 import Achievement from './pages/Achievement'
@@ -50,7 +50,6 @@ export default function App() {
         <Route path="/partida/:id" element={guard(<Match />, false)} />
         <Route path="/fallen" element={guard(<Fallen />, false)} />
         <Route path="/loja" element={guard(<Shop />)} />
-        <Route path="/produto/:id" element={guard(<Product />, false)} />
         <Route path="/perfil" element={guard(<Profile />)} />
         <Route path="/conquista/:id" element={guard(<Achievement />, false)} />
         <Route path="*" element={<Navigate to="/" replace />} />

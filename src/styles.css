@@ -486,3 +486,16 @@ select.input { appearance: none; background: var(--white) url("data:image/svg+xm
 
 .tag-fict { display: inline-block; margin-left: 6px; padding: 2px 6px; border-radius: 4px; background: var(--ink); color: var(--yellow); font: 700 10px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; vertical-align: middle; }
 .shop-link { display: inline-flex; align-items: center; gap: 4px; padding: 8px 12px; border: var(--border); border-radius: var(--r-sm); box-shadow: var(--shadow-2); background: var(--white); font: 700 13px/1 var(--f-body); }
+
+/* ---------- loja (apoie a FURIA) ---------- */
+.support-hero { width: auto; max-width: none; min-height: 240px; }
+.support-hero__photo { position: absolute; right: 0; top: 0; height: 100%; width: 48%; object-fit: cover; filter: grayscale(.2); }
+.support-hero::after { background: linear-gradient(90deg, var(--ink) 50%, transparent 78%); }
+.support-hero .banner__text { width: 66%; justify-content: flex-end; }
+.support-level { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: var(--r-md); }
+.support-level img { width: 52px; height: 52px; border-radius: 50%; object-fit: cover; object-position: 55% 50%; background: var(--yellow); border: var(--border); }
+.support-level > span:nth-child(2) { flex: 1; display: grid; gap: 2px; }
+.benefit--fict { background: var(--cream); border-style: dashed; }
+.support-drop { width: auto; max-width: none; min-height: 200px; }
+.support-drop .banner__text { width: 60%; }
+.support-drop .banner__art { width: 46%; right: -8px; }

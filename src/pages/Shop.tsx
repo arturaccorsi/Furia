@@ -1,156 +1,72 @@
-import { useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
 import { ArrowUpRight, Check } from 'lucide-react'
-import { LEVEL_DISCOUNT, PRODUCTS, PRODUCT_CATEGORIES, Product as P } from '../data'
-import { Button, NavHeader } from '../components'
-import { money } from '../time'
-
-const levelPrice = (p: P) => p.price * (1 - LEVEL_DISCOUNT)
-
-const categoryOf = (p: P) =>
-  p.collection.includes('Neotrad') ? 'Neotrad' : p.collection.includes('Uniforme') ? 'Uniformes' : p.collection.includes('despedida') ? 'Despedida' : 'Básicos'
+import { Button } from '../components'
 
 export const OFFICIAL_SHOP = 'https://shop.furia.gg/'
 
-function OfficialShopLink() {
-  return (
-    <a href={OFFICIAL_SHOP} target="_blank" rel="noreferrer" className="shop-link">
-      Loja oficial <ArrowUpRight size={16} strokeWidth={2.6} />
-    </a>
-  )
-}
+const BENEFITS = [
+  { title: '20% off em tudo', sub: 'Desconto do nível Pantera aplicado no checkout' },
+  { title: 'Acesso antecipado a drops', sub: 'Compre as coleções 24h antes do público' },
+  { title: 'Frete grátis acima de R$ 250', sub: 'Para todo o Brasil' },
+  { title: 'Pontos a cada compra', sub: '5 pts por real gasto para subir de nível' },
+]
 
+/** Aba Loja: sem vitrine própria; apresenta a ideia dos benefícios e leva à loja oficial. */
 export function Shop() {
-  const [cat, setCat] = useState('Tudo')
-  const list = PRODUCTS.filter((p) => cat === 'Tudo' || categoryOf(p) === cat)
   return (
     <>
       <header className="page-header">
         <h1 className="display-xl">Loja</h1>
-        <OfficialShopLink />
       </header>
 
-      <div className="card level-strip">
-        <img src="/img/pantera-nivel.webp" alt="" />
-        <span>
-          <b className="body-bold">Pantera · 20% off em tudo <span className="tag-fict">Fictício</span></b>
-          <small className="muted">Desconto de exemplo. Na loja oficial os preços são os normais.</small>
-        </span>
-      </div>
-
-      <article className="banner banner--ink banner--shop">
-        <img src="/img/pantera-tattoo.webp" alt="" className="banner__art" />
+      <article className="banner banner--ink support-hero">
+        <img src="/img/camiseta-2.webp" alt="Torcedor com a camisa da FURIA" className="support-hero__photo" />
         <div className="banner__text">
-          <span className="tag-yellow">Drop novo · 12 peças</span>
-          <h2 className="display-l">Coleção Neotrad</h2>
-          <p className="caption">Flash de tatuagem brasileira na pele da pantera.</p>
-          <Button variant="secondary" onClick={() => setCat('Neotrad')}>Ver coleção →</Button>
+          <span className="tag-yellow">Apoie a FURIA</span>
+          <h2 className="display-l">Vista o manto da pantera</h2>
+          <p className="caption">Cada camisa, moletom e boné ajuda a manter os times da FURIA no topo.</p>
         </div>
       </article>
 
-      <div className="chips chips--scroll" role="tablist">
-        {PRODUCT_CATEGORIES.map((c) => (
-          <button key={c} className={`chip${cat === c ? ' chip--on' : ''}`} onClick={() => setCat(c)} aria-pressed={cat === c}>
-            {c}
-          </button>
-        ))}
-      </div>
-      <span className="mono-label muted">{list.length} produtos</span>
+      <Button full href={OFFICIAL_SHOP}>
+        Ver loja oficial <ArrowUpRight size={18} strokeWidth={2.6} />
+      </Button>
 
-      <div className="grid-2">
-        {list.map((p) => (
-          <Link key={p.id} to={`/produto/${p.id}`} className="card product-card">
-            <span className="product-card__img" style={{ backgroundImage: `url(${p.images[0]})` }} />
-            <span className="mono-label muted">{p.collection}</span>
-            <b className="heading">{p.name}</b>
-            <s className="caption muted">{money(p.price)}</s>
-            <b className="mono-score">{money(levelPrice(p))}</b>
-          </Link>
-        ))}
-      </div>
-    </>
-  )
-}
-
-export function Product() {
-  const { id } = useParams()
-  const p = PRODUCTS.find((x) => x.id === id)
-  const [img, setImg] = useState(0)
-  const [size, setSize] = useState<string | null>(null)
-  if (!p) return <><NavHeader title="Produto" /><p className="empty">Produto não encontrado. <Link to="/loja">Voltar à loja</Link></p></>
-  const price = levelPrice(p)
-
-  return (
-    <>
-      <NavHeader title="Produto" />
-      <div className="gallery">
-        <span className="gallery__main" style={{ backgroundImage: `url(${p.images[img]})` }}>
-          <span className="gallery__count mono-label">{img + 1}/{p.images.length}</span>
-        </span>
-        <div className="gallery__thumbs">
-          {p.images.map((src, i) => (
-            <button key={i} className={`gallery__thumb${i === img ? ' gallery__thumb--on' : ''}`} style={{ backgroundImage: `url(${src})` }} onClick={() => setImg(i)} aria-label={`Foto ${i + 1}`} />
+      <section className="section">
+        <div className="row-between">
+          <h2 className="ribbon">No futuro, com o seu nível</h2>
+        </div>
+        <p className="placeholder-note">Benefícios fictícios: uma ideia de como o nível do app poderia valer na loja. Hoje a loja oficial não aplica nenhum deles.</p>
+        <div className="card support-level">
+          <img src="/img/pantera-nivel.webp" alt="" />
+          <span>
+            <span className="mono-label muted">Seu nível</span>
+            <b className="display-m">Pantera</b>
+          </span>
+          <span className="tag-fict">Fictício</span>
+        </div>
+        <div className="stack">
+          {BENEFITS.map((b) => (
+            <div key={b.title} className="card benefit benefit--fict">
+              <span className="benefit__ok"><Check size={16} strokeWidth={3.2} /></span>
+              <span>
+                <b className="body-bold">{b.title}</b>
+                <small className="muted">{b.sub}</small>
+              </span>
+            </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      <div className="product-info">
-        <span className="mono-label muted">{p.collection}</span>
-        <h1 className="display-l">{p.name}</h1>
-        <div className="product-info__price">
-          <b className="mono-score">{money(price)}</b>
-          <s className="muted">{money(p.price)}</s>
+      <article className="banner banner--yellow support-drop">
+        <img src="/img/pantera-tattoo.webp" alt="" className="banner__art" />
+        <div className="banner__text">
+          <span className="tag-ink">Coleção Neotrad</span>
+          <h2 className="display-l">Flash de tatuagem na pele da pantera</h2>
+          <Button href={OFFICIAL_SHOP}>Ver na loja oficial ↗</Button>
         </div>
-        <small className="muted">ou 3x de {money(price / 3)} sem juros</small>
-      </div>
+      </article>
 
-      <div className="card level-benefit">
-        <img src="/img/pantera-nivel.webp" alt="" />
-        <span>
-          <span className="mono-label">Seu nível: Pantera <span className="tag-fict">Fictício</span></span>
-          <b className="body-bold">20% off + frete grátis acima de R$ 250</b>
-          <small>Benefício de exemplo: ainda não vale na loja oficial.</small>
-        </span>
-      </div>
-
-      <div className="stack">
-        <div className="row-between">
-          <b className="heading">Tamanho</b>
-          <span className="caption underline">Guia de medidas</span>
-        </div>
-        <div className="sizes">
-          {p.sizes.map((s) => {
-            const off = p.soldOut?.includes(s)
-            return (
-              <button key={s} disabled={off} className={`size${size === s ? ' size--on' : ''}${off ? ' size--off' : ''}`} onClick={() => setSize(s)}>
-                {s}
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      <div className="stack">
-        <b className="heading">Sobre a peça</b>
-        <p className="body">{p.description}</p>
-        {['Troca grátis em até 30 dias', 'Envio para todo o Brasil'].map((t) => (
-          <span key={t} className="caption check-line"><Check size={16} color="var(--green)" strokeWidth={3} /> {t}</span>
-        ))}
-      </div>
-
-      <div className="buy-bar">
-        <div className="row-between">
-          <span>
-            <span className="mono-label muted">Preço do nível (fictício)</span>
-            <s className="caption muted">{money(p.price)}</s>
-          </span>
-          <b className="mono-score">{money(price)}</b>
-        </div>
-        <Button full href={OFFICIAL_SHOP}>
-          Comprar na loja oficial <ArrowUpRight size={16} strokeWidth={2.6} />
-        </Button>
-        <small className="muted center">A compra é feita no site oficial da FURIA, com os preços normais.</small>
-      </div>
+      <small className="muted center">Você vai sair do app: a compra acontece no site oficial da FURIA, com os preços normais.</small>
     </>
   )
 }
