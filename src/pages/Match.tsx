@@ -26,6 +26,7 @@ export default function Match() {
   return (
     <>
       <NavHeader title="Partida" />
+      {!match.id.startsWith('ps-') && <p className="placeholder-note">Partida fictícia, só para exemplo.</p>}
       <article className="card match-card match-card--detail">
         {match.live ? <LiveTag /> : null}
         <div className="match-card__meta">

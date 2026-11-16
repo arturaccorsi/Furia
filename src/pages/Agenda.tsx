@@ -63,7 +63,7 @@ export default function Agenda() {
           />
         ) : (
           <>
-            {placeholder && <p className="placeholder-note">Agenda de exemplo: os horários oficiais ainda não foram divulgados.</p>}
+            {placeholder && <p className="placeholder-note">Jogos fictícios: a agenda oficial ainda não foi divulgada.</p>}
             {[...days.entries()].map(([day, list]) => (
               <div key={day} className="stack">
                 <span className="mono-label muted">{day}</span>

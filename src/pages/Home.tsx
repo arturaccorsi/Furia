@@ -33,11 +33,14 @@ export default function Home() {
 
       <Section title="Ao vivo e próximos" link={{ to: '/agenda', label: 'Ver agenda' }}>
         {upcoming.length ? (
+          <>
+          <p className="placeholder-note">Jogos fictícios: a agenda oficial ainda não foi divulgada.</p>
           <Carousel>
             {upcoming.slice(0, 3).map((m) => (
               <MatchCard key={m.id} match={m} />
             ))}
           </Carousel>
+          </>
         ) : (
           <EmptyState
             art={<img src="/img/furia-logo.webp" alt="" />}
