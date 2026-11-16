@@ -17,10 +17,16 @@ type ApiMatch = {
 }
 type Api = { upcoming: ApiMatch[]; results: ApiMatch[]; errors?: string[] }
 
-export type Source = 'loading' | 'pandascore' | 'demo'
+/**
+ * - pandascore: a função respondeu (mesmo que vazia)
+ * - demo: não há função (rodando local) → dados de demonstração
+ * - error: a função existe mas falhou
+ */
+export type Source = 'loading' | 'pandascore' | 'demo' | 'error'
 type Data = { matches: Match[]; results: Result[]; source: Source }
 
 const demo: Data = { matches: MATCHES, results: RESULTS, source: 'demo' }
+const failed: Data = { matches: [], results: [], source: 'error' }
 let cache: Data | null = null
 let pending: Promise<Data> | null = null
 
@@ -43,21 +49,35 @@ function fromApi(a: Api): Data {
 
 function load(): Promise<Data> {
   pending ??= fetch('/api/partidas')
-    .then((r) => (r.ok && r.headers.get('content-type')?.includes('json') ? (r.json() as Promise<Api>) : Promise.reject(r.status)))
-    .then((a) => {
+    .then(async (r) => {
+      const isJson = r.headers.get('content-type')?.includes('json')
+      if (!isJson) return demo // sem a função (dev local / preview estático)
+      if (!r.ok) return failed
+      const a = (await r.json()) as Api
       if (a.errors?.length) console.warn('PandaScore:', a.errors)
-      const d = fromApi(a)
-      return d.matches.length || d.results.length ? d : demo
+      return fromApi(a)
     })
-    .catch(() => demo)
+    .catch(() => failed)
     .then((d) => (cache = d))
   return pending
 }
 
-export function useMatchData(): Data {
-  const [data, setData] = useState<Data>(cache ?? { ...demo, source: 'loading' })
+/** Dados da PandaScore (ou demonstração quando não há função). */
+export function useMatchData(): Data & { retry: () => void } {
+  const [data, setData] = useState<Data>(cache ?? { matches: [], results: [], source: 'loading' })
   useEffect(() => {
     if (!cache) load().then(setData)
   }, [])
-  return data
+  const retry = () => {
+    cache = null
+    pending = null
+    setData({ matches: [], results: [], source: 'loading' })
+    load().then(setData)
+  }
+  return { ...data, retry }
+}
+
+/** Partidas para a agenda: reais quando houver, senão os placeholders. */
+export function agendaMatches(d: Data): { list: Match[]; placeholder: boolean } {
+  return d.source === 'pandascore' && d.matches.length ? { list: d.matches, placeholder: false } : { list: MATCHES, placeholder: true }
 }

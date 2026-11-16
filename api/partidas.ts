@@ -92,8 +92,8 @@ function json(body: unknown, status: number) {
     status,
     headers: {
       'content-type': 'application/json; charset=utf-8',
-      // guarda na borda da Vercel por 5 min para poupar o limite da PandaScore
-      'cache-control': 'public, s-maxage=300, stale-while-revalidate=600',
+      // guarda na borda da Vercel por 1 dia (e serve a versão antiga por mais 1 dia enquanto atualiza)
+      'cache-control': 'public, s-maxage=86400, stale-while-revalidate=86400',
     },
   })
 }

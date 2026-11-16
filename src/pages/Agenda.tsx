@@ -1,15 +1,17 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { Game, teamInfo } from '../data'
-import { useMatchData } from '../live'
+import { GAME_LOGO, Game, teamInfo } from '../data'
+import { agendaMatches, useMatchData } from '../live'
 import { useMyGames } from '../store'
-import { GameLogo, LiveFlame, NavHeader, ResultCard } from '../components'
+import { Button, EmptyState, GameLogo, LiveFlame, LoadingCards, NavHeader, ResultCard } from '../components'
 import { fmtDay, fmtTime, matchStart } from '../time'
 
 export default function Agenda() {
   const [params, setParams] = useSearchParams()
   const mine = useMyGames()
-  const { matches: MATCHES, results: RESULTS } = useMatchData()
+  const data = useMatchData()
+  const { list: MATCHES, placeholder } = agendaMatches(data)
+  const RESULTS = data.results
   const tab = params.get('aba') === 'resultados' ? 'resultados' : 'proximos'
   const game = (params.get('jogo') as Game | null) ?? null
   const set = (k: string, v: string | null) => {
@@ -47,22 +49,54 @@ export default function Agenda() {
       </div>
 
       {tab === 'proximos' ? (
-        [...days.entries()].map(([day, list]) => (
-          <div key={day} className="stack">
-            <span className="mono-label muted">{day}</span>
-            {list.map((m) => (
-              <Link key={m.id} to={`/partida/${m.id}`} className={`card agenda-row${m.live ? ' agenda-row--live' : ''}`}>
-                <b className="mono-m">{m.live ? <LiveFlame size={18} color="var(--red)" /> : fmtTime(matchStart(m))}</b>
-                <span className="agenda-row__bar" />
-                <span className="agenda-row__info">
-                  <b className="body-bold">FURIA vs {teamInfo(m.opponent).name}</b>
-                  <small className="muted">{m.live ? 'Ao vivo · ' : ''}{m.game} · {m.event}</small>
-                </span>
-                <ChevronRight size={20} />
-              </Link>
+        matches.length === 0 ? (
+          <EmptyState
+            art={game ? <img src={GAME_LOGO[game]} alt="" /> : undefined}
+            title={game ? `Sem jogos de ${game} marcados` : 'Nenhum jogo marcado'}
+            text={game ? `Assim que a FURIA tiver partida de ${game}, ela aparece aqui.` : 'Assim que a FURIA tiver partidas nas suas modalidades, elas aparecem aqui.'}
+            actions={
+              <>
+                <Button variant="secondary" onClick={() => set('aba', 'resultados')}>{game ? `Ver resultados de ${game}` : 'Ver resultados'}</Button>
+                {game && <Button onClick={() => set('jogo', null)}>Ver todos os jogos</Button>}
+              </>
+            }
+          />
+        ) : (
+          <>
+            {placeholder && <p className="placeholder-note">Agenda de exemplo: os horários oficiais ainda não foram divulgados.</p>}
+            {[...days.entries()].map(([day, list]) => (
+              <div key={day} className="stack">
+                <span className="mono-label muted">{day}</span>
+                {list.map((m) => (
+                  <Link key={m.id} to={`/partida/${m.id}`} className={`card agenda-row${m.live ? ' agenda-row--live' : ''}`}>
+                    <b className="mono-m">{m.live ? <LiveFlame size={18} color="var(--red)" /> : fmtTime(matchStart(m))}</b>
+                    <span className="agenda-row__bar" />
+                    <span className="agenda-row__info">
+                      <b className="body-bold">FURIA vs {teamInfo(m.opponent).name}</b>
+                      <small className="muted">{m.live ? 'Ao vivo · ' : ''}{m.game} · {m.event}</small>
+                    </span>
+                    <ChevronRight size={20} />
+                  </Link>
+                ))}
+              </div>
             ))}
-          </div>
-        ))
+          </>
+        )
+      ) : data.source === 'loading' ? (
+        <LoadingCards n={2} />
+      ) : data.source === 'error' ? (
+        <EmptyState
+          title="Não deu pra carregar"
+          text="Os resultados não responderam agora. Tente de novo em instantes."
+          actions={<Button variant="secondary" onClick={data.retry}>Tentar de novo</Button>}
+        />
+      ) : results.length === 0 ? (
+        <EmptyState
+          art={game ? <img src={GAME_LOGO[game]} alt="" /> : undefined}
+          title={game ? `Ainda sem resultados de ${game}` : 'Ainda sem resultados'}
+          text="Os placares aparecem aqui assim que as partidas terminam."
+          actions={<Button variant="secondary" onClick={() => set('aba', null)}>{game ? `Ver próximos jogos de ${game}` : 'Ver próximos jogos'}</Button>}
+        />
       ) : (
         <div className="grid-2">
           {results.map((r) => (
@@ -70,7 +104,6 @@ export default function Agenda() {
           ))}
         </div>
       )}
-      {tab === 'proximos' && matches.length === 0 && <p className="empty">Nenhum jogo marcado nessa modalidade.</p>}
     </>
   )
 }

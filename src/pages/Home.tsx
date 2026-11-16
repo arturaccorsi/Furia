@@ -1,19 +1,21 @@
 import { useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { ACHIEVEMENTS } from '../data'
+import { ACHIEVEMENTS, MATCHES } from '../data'
 import { useMatchData } from '../live'
-import { AchievementBadge, AppHeader, Button, Carousel, Divider, MatchCard, ResultCard, Section } from '../components'
+import { AchievementBadge, AppHeader, Button, Carousel, Divider, EmptyState, LoadingCards, MatchCard, ResultCard, Section } from '../components'
 import { useMyGames, useStore } from '../store'
 import { matchStart } from '../time'
 
 export default function Home() {
   const { name } = useStore()
   const mine = useMyGames()
-  const { matches: MATCHES, results: RESULTS } = useMatchData()
+  // "Ao vivo e próximos" fica com os placeholders; resultados vêm da PandaScore
+  const { results: RESULTS, source, retry } = useMatchData()
   const rank = (g: string) => mine.indexOf(g as never)
   const upcoming = [...MATCHES]
     .filter((m) => mine.includes(m.game))
     .sort((a, b) => Number(!!b.live) - Number(!!a.live) || matchStart(a) - matchStart(b) || rank(a.game) - rank(b.game))
+  const myResults = RESULTS.filter((r) => mine.includes(r.game))
   const today = upcoming.filter((m) => new Date(matchStart(m)).toDateString() === new Date().toDateString())
   const live = upcoming.filter((m) => m.live).length
 
@@ -48,11 +50,19 @@ export default function Home() {
       <Divider />
 
       <Section title="Resultados" link={{ to: '/agenda?aba=resultados', label: 'Ver todos' }}>
-        <Carousel>
-          {RESULTS.filter((r) => mine.includes(r.game)).sort((a, b) => rank(a.game) - rank(b.game)).map((r) => (
-            <ResultCard key={r.id} result={r} />
-          ))}
-        </Carousel>
+        {source === 'loading' ? (
+          <LoadingCards n={3} />
+        ) : source === 'error' ? (
+          <EmptyState title="Não deu pra carregar" text="Os resultados não responderam agora. Tente de novo em instantes." actions={<Button variant="secondary" onClick={retry}>Tentar de novo</Button>} />
+        ) : myResults.length ? (
+          <Carousel>
+            {myResults.map((r) => (
+              <ResultCard key={r.id} result={r} />
+            ))}
+          </Carousel>
+        ) : (
+          <EmptyState title="Sem resultados recentes" text="Quando a FURIA jogar nas suas modalidades, os placares aparecem aqui." />
+        )}
       </Section>
     </>
   )

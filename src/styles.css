@@ -473,3 +473,13 @@ select.input { appearance: none; background: var(--white) url("data:image/svg+xm
 .right { text-align: right; }
 
 .grid-2 .result-card { width: auto; }
+
+/* ---------- estados vazios ---------- */
+.empty-state { display: grid; justify-items: center; gap: 8px; padding: 24px 18px; text-align: center; border: 2.5px dashed var(--ink); border-radius: var(--r-lg); background: var(--cream); }
+.empty-state__art { display: grid; place-items: center; width: 64px; height: 64px; border-radius: 50%; background: var(--white); border: var(--border); margin-bottom: 4px; }
+.empty-state__art img { width: 60%; height: 60%; object-fit: contain; filter: grayscale(1); opacity: .7; }
+.empty-state__actions { display: grid; gap: 8px; width: 100%; margin-top: 6px; }
+.loading-row { display: flex; gap: 12px; overflow: hidden; }
+.skeleton { flex: none; width: 160px; height: 150px; border-radius: var(--r-lg); background: linear-gradient(90deg, var(--bone) 25%, #ece0c8 50%, var(--bone) 75%); background-size: 200% 100%; animation: shimmer 1.2s infinite linear; }
+@keyframes shimmer { to { background-position: -200% 0; } }
+.placeholder-note { display: flex; gap: 8px; align-items: center; padding: 8px 12px; border-radius: var(--r-sm); background: var(--bone); font: 600 12px/1.35 var(--f-body); color: var(--muted); }

@@ -34,15 +34,19 @@ npm run build
 
 O site funciona sem Supabase (tudo fica no navegador). Para ligar:
 
-1. No painel do Supabase, abra **SQL Editor**, cole o conteúdo de `supabase/migrations/0001_sugestoes.sql` e rode.
+1. No painel do Supabase, abra **SQL Editor** e rode, em ordem, cada arquivo de `supabase/migrations/` (`0001_sugestoes.sql`, `0002_palpites.sql`).
 2. Copie `.env.example` para `.env.local` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (em **Project Settings > API**).
-3. Rode `npm run dev`. As sugestões da história do FalleN passam a ir para a tabela `sugestoes`.
+3. Rode `npm run dev`. As sugestões da história do FalleN vão para a tabela `sugestoes` e os palpites para `palpites` (o "% da torcida" passa a ser real).
 
 Na hospedagem (Vercel, Netlify), cadastre as mesmas duas variáveis de ambiente.
 
 ## PandaScore (partidas reais)
 
-A função `api/partidas.ts` roda na Vercel, consulta a PandaScore e devolve ao site as partidas da FURIA em CS2, LoL e Valorant (ao vivo, próximas e últimos resultados). O resultado fica em cache por 5 minutos.
+A função `api/partidas.ts` roda na Vercel, consulta a PandaScore e devolve ao site as partidas da FURIA em CS2, LoL e Valorant (ao vivo, próximas e últimos resultados). O resultado fica em cache por 1 dia.
+
+- **Resultados:** 100% PandaScore.
+- **Agenda (próximos):** PandaScore quando houver jogos marcados; senão, a agenda de exemplo.
+- **Home "Ao vivo e próximos" e detalhe da partida:** continuam com os exemplos (mapas incluídos).
 
 - Cadastre o token na Vercel como `PANDASCORE_TOKEN` (sem `VITE_`, como segredo). Ele nunca vai para o navegador.
 - Sem o token, ou rodando local com `npm run dev`, o site usa os dados de demonstração de `src/data.ts`.

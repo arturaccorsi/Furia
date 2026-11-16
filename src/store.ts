@@ -9,6 +9,8 @@ export type Suggestion = { kind: string; moment: string; text: string; link: str
 
 type State = {
   name: string | null
+  /** id aleatório deste navegador, usado para salvar palpites sem login */
+  deviceId: string
   /** modalidades marcadas no onboarding */
   games: string[]
   cart: CartItem[]
@@ -20,14 +22,16 @@ type State = {
 }
 
 const KEY = 'furia-torcida:v1'
-const empty: State = { name: null, games: ['CS2', 'LoL', 'Valorant'], cart: [], palpites: {}, reminders: [], checkins: [], suggestions: [] }
+const newId = () => (crypto.randomUUID ? crypto.randomUUID() : `${Date.now().toString(16)}-0000-4000-8000-${Math.random().toString(16).slice(2, 14).padEnd(12, '0')}`)
+const empty: State = { name: null, deviceId: '', games: ['CS2', 'LoL', 'Valorant'], cart: [], palpites: {}, reminders: [], checkins: [], suggestions: [] }
 
 function load(): State {
   try {
     const raw = localStorage.getItem(KEY)
-    return raw ? { ...empty, ...JSON.parse(raw) } : empty
+    const st: State = raw ? { ...empty, ...JSON.parse(raw) } : { ...empty }
+    return st.deviceId ? st : { ...st, deviceId: newId() }
   } catch {
-    return empty
+    return { ...empty, deviceId: newId() }
   }
 }
 
@@ -57,7 +61,7 @@ export function useStore() {
 export const actions = {
   setName: (name: string) => set({ name: name.trim() }),
   setGames: (games: string[]) => set({ games }),
-  logout: () => set({ ...empty }),
+  logout: () => set({ ...empty, deviceId: newId() }),
   addToCart: (item: CartItem) => set({ cart: [...state.cart, item] }),
   removeFromCart: (index: number) => set({ cart: state.cart.filter((_, i) => i !== index) }),
   setPalpite: (matchId: string, p: Palpite) => set({ palpites: { ...state.palpites, [matchId]: p } }),

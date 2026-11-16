@@ -414,3 +414,25 @@ export function ModalityGrid({ selected, onToggle }: { selected: string[]; onTog
     </div>
   )
 }
+
+/** Estado vazio / erro (sem jogos no filtro, sem resultados, falha ao carregar). */
+export function EmptyState({ art, title, text, actions }: { art?: ReactNode; title: string; text: string; actions?: ReactNode }) {
+  return (
+    <div className="empty-state" role="status">
+      {art && <span className="empty-state__art">{art}</span>}
+      <b className="display-m">{title}</b>
+      <p className="caption muted">{text}</p>
+      {actions && <div className="empty-state__actions">{actions}</div>}
+    </div>
+  )
+}
+
+export function LoadingCards({ n = 2 }: { n?: number }) {
+  return (
+    <div className="loading-row" aria-label="Carregando">
+      {Array.from({ length: n }, (_, i) => (
+        <span key={i} className="skeleton" />
+      ))}
+    </div>
+  )
+}

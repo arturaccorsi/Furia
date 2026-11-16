@@ -1,7 +1,8 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Check, Lock, MapPin } from 'lucide-react'
-import { Match as M, teamInfo } from '../data'
+import { MATCHES, Match as M, teamInfo } from '../data'
+import { savePalpiteRemote, useCrowd } from '../palpites'
 import { useMatchData } from '../live'
 import { Button, Countdown, LiveFlame, LiveTag, NavHeader, Section, TeamCrest } from '../components'
 import { actions, useStore } from '../store'
@@ -10,7 +11,7 @@ import { fmtDay, fmtTime, matchStart } from '../time'
 export default function Match() {
   const { id } = useParams()
   const { matches, source } = useMatchData()
-  const match = matches.find((m) => m.id === id)
+  const match = MATCHES.find((m) => m.id === id) ?? matches.find((m) => m.id === id)
   if (!match && source === 'loading') return <NavHeader title="Partida" />
   if (!match) {
     return (
@@ -77,16 +78,17 @@ export default function Match() {
       <CheckinCard match={match} />
 
       <Section title="Mapas">
-        {match.maps ? (
+        {match.maps || match.live ? (
           <div className="stack">
-            {match.maps.map((m, i) => (
+            {!match.maps && <p className="placeholder-note">Exemplo: o placar mapa a mapa ainda não está disponível para esta partida.</p>}
+            {(match.maps ?? EXAMPLE_MAPS).map((m, i) => (
               <div key={m.name} className={`card map-row${m.state === 'live' ? ' map-row--live' : ''}`}>
                 <span className={`map-row__result map-row__result--${m.state}`}>
                   {m.state === 'win' ? 'V' : m.state === 'loss' ? 'D' : <LiveFlame size={16} color="#fff" />}
                 </span>
                 <span className="map-row__info">
                   <b className="heading">{m.name}</b>
-                  <small className="muted">Mapa {i + 1} · {m.state === 'live' ? `Ao vivo · rodada ${match.live?.round}` : m.pick}</small>
+                  <small className="muted">Mapa {i + 1} · {m.state === 'live' ? `Ao vivo · rodada ${match.live?.round ?? 18}` : m.pick}</small>
                 </span>
                 <span className="map-row__score mono-score">
                   <span>{m.furia}</span>
@@ -163,10 +165,23 @@ function CheckinCard({ match }: { match: M }) {
   )
 }
 
+const EXAMPLE_MAPS = MATCHES.find((m) => m.maps)!.maps!
+
 const scoreOptions = (m: M) => {
   const n = Number(m.format.replace(/\D/g, '')) || 3
   const win = Math.ceil(n / 2)
   return n === 1 ? ['1 – 0'] : Array.from({ length: win }, (_, i) => `${win} – ${i}`)
+}
+
+function CrowdLine({ match, refreshKey, suffix = '' }: { match: M; refreshKey?: unknown; suffix?: string }) {
+  const crowd = useCrowd(match.id, refreshKey)
+  const pct = crowd?.furia ?? match.crowdPick
+  if (pct == null) return suffix ? <small className="muted">{suffix}</small> : null
+  return (
+    <small className="muted">
+      {pct}% da torcida {match.live ? 'foi' : 'vai'} de FURIA{crowd ? ` (${crowd.total} ${crowd.total === 1 ? 'palpite' : 'palpites'})` : ''}. {suffix}
+    </small>
+  )
 }
 
 function ClosedBet({ match }: { match: M }) {
@@ -190,7 +205,7 @@ function ClosedBet({ match }: { match: M }) {
       ) : (
         <p className="muted caption">Você não deu palpite nesta série.</p>
       )}
-      {match.crowdPick != null && <small className="muted">{match.crowdPick}% da torcida foi de FURIA.</small>}
+      <CrowdLine match={match} />
       <p className="note note--dashed caption muted">
         <Lock size={16} /> Os palpites fecham antes do início da série. Com a partida ao vivo, não dá mais pra alterar.
       </p>
@@ -199,8 +214,10 @@ function ClosedBet({ match }: { match: M }) {
 }
 
 function OpenBet({ match }: { match: M }) {
-  const { palpites } = useStore()
+  const { palpites, deviceId, name } = useStore()
   const saved = palpites[match.id]
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [winner, setWinner] = useState<'furia' | 'opp'>(saved?.winner ?? 'furia')
   const [score, setScore] = useState(saved?.score ?? scoreOptions(match)[1])
   const [editing, setEditing] = useState(!saved)
@@ -220,6 +237,8 @@ function OpenBet({ match }: { match: M }) {
             <b>{saved.winner === 'furia' ? 'FURIA' : opp.name} vence por {saved.score}</b>
           </span>
         </div>
+        <CrowdLine match={match} refreshKey={saved} />
+        {error && <small className="red">{error}</small>}
         <Button full variant="secondary" onClick={() => setEditing(true)}>Alterar palpite</Button>
       </div>
     )
@@ -247,15 +266,19 @@ function OpenBet({ match }: { match: M }) {
           </button>
         ))}
       </div>
-      <small className="muted">{match.crowdPick != null ? `${match.crowdPick}% da torcida vai de FURIA. ` : ''}Os palpites fecham no início da série.</small>
+      <CrowdLine match={match} suffix="Os palpites fecham no início da série." />
       <Button
         full
-        onClick={() => {
+        disabled={sending}
+        onClick={async () => {
+          setSending(true)
           actions.setPalpite(match.id, { winner, score })
+          setError(await savePalpiteRemote({ deviceId, matchId: match.id, winner, score, nome: name }))
+          setSending(false)
           setEditing(false)
         }}
       >
-        Confirmar palpite
+        {sending ? 'Enviando…' : 'Confirmar palpite'}
       </Button>
     </div>
   )
