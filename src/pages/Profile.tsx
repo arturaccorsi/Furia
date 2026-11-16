@@ -41,6 +41,7 @@ export default function Profile() {
       </Section>
 
       <Section title="Benefícios ativos">
+        <p className="placeholder-note">Benefícios fictícios, só para mostrar como o nível funcionaria.</p>
         <div className="stack">
           {BENEFITS.map((b) => (
             <div key={b.title} className="card benefit">

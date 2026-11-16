@@ -1,9 +1,8 @@
 import { useState } from 'react'
-import { Link, useNavigate, useParams } from 'react-router-dom'
-import { Check, ShoppingBag, Trash2 } from 'lucide-react'
+import { Link, useParams } from 'react-router-dom'
+import { ArrowUpRight, Check } from 'lucide-react'
 import { LEVEL_DISCOUNT, PRODUCTS, PRODUCT_CATEGORIES, Product as P } from '../data'
 import { Button, NavHeader } from '../components'
-import { actions, useStore } from '../store'
 import { money } from '../time'
 
 const levelPrice = (p: P) => p.price * (1 - LEVEL_DISCOUNT)
@@ -11,13 +10,13 @@ const levelPrice = (p: P) => p.price * (1 - LEVEL_DISCOUNT)
 const categoryOf = (p: P) =>
   p.collection.includes('Neotrad') ? 'Neotrad' : p.collection.includes('Uniforme') ? 'Uniformes' : p.collection.includes('despedida') ? 'Despedida' : 'Básicos'
 
-function CartButton() {
-  const { cart } = useStore()
+export const OFFICIAL_SHOP = 'https://shop.furia.gg/'
+
+function OfficialShopLink() {
   return (
-    <Link to="/carrinho" className="icon-btn" aria-label={`Carrinho, ${cart.length} itens`}>
-      <ShoppingBag size={20} strokeWidth={2.4} />
-      {cart.length > 0 && <span className="icon-btn__count">{cart.length}</span>}
-    </Link>
+    <a href={OFFICIAL_SHOP} target="_blank" rel="noreferrer" className="shop-link">
+      Loja oficial <ArrowUpRight size={16} strokeWidth={2.6} />
+    </a>
   )
 }
 
@@ -28,14 +27,14 @@ export function Shop() {
     <>
       <header className="page-header">
         <h1 className="display-xl">Loja</h1>
-        <CartButton />
+        <OfficialShopLink />
       </header>
 
       <div className="card level-strip">
         <img src="/img/pantera-nivel.webp" alt="" />
         <span>
-          <b className="body-bold">Pantera · 20% off em tudo</b>
-          <small className="muted">Desconto do seu nível aplicado direto no checkout</small>
+          <b className="body-bold">Pantera · 20% off em tudo <span className="tag-fict">Fictício</span></b>
+          <small className="muted">Desconto de exemplo. Na loja oficial os preços são os normais.</small>
         </span>
       </div>
 
@@ -78,13 +77,12 @@ export function Product() {
   const p = PRODUCTS.find((x) => x.id === id)
   const [img, setImg] = useState(0)
   const [size, setSize] = useState<string | null>(null)
-  const [added, setAdded] = useState(false)
   if (!p) return <><NavHeader title="Produto" /><p className="empty">Produto não encontrado. <Link to="/loja">Voltar à loja</Link></p></>
   const price = levelPrice(p)
 
   return (
     <>
-      <NavHeader title="Produto" right={<CartButton />} />
+      <NavHeader title="Produto" />
       <div className="gallery">
         <span className="gallery__main" style={{ backgroundImage: `url(${p.images[img]})` }}>
           <span className="gallery__count mono-label">{img + 1}/{p.images.length}</span>
@@ -109,9 +107,9 @@ export function Product() {
       <div className="card level-benefit">
         <img src="/img/pantera-nivel.webp" alt="" />
         <span>
-          <span className="mono-label">Seu nível: Pantera</span>
+          <span className="mono-label">Seu nível: Pantera <span className="tag-fict">Fictício</span></span>
           <b className="body-bold">20% off + frete grátis acima de R$ 250</b>
-          <small>Você já está no nível máximo.</small>
+          <small>Benefício de exemplo: ainda não vale na loja oficial.</small>
         </span>
       </div>
 
@@ -143,69 +141,16 @@ export function Product() {
       <div className="buy-bar">
         <div className="row-between">
           <span>
-            <span className="mono-label muted">Preço do seu nível</span>
+            <span className="mono-label muted">Preço do nível (fictício)</span>
             <s className="caption muted">{money(p.price)}</s>
           </span>
           <b className="mono-score">{money(price)}</b>
         </div>
-        <Button
-          full
-          disabled={!size}
-          onClick={() => {
-            if (!size) return
-            actions.addToCart({ productId: p.id, size })
-            setAdded(true)
-            setTimeout(() => setAdded(false), 1800)
-          }}
-        >
-          {added ? 'Adicionado ✓' : size ? 'Adicionar ao carrinho' : 'Escolha um tamanho'}
+        <Button full href={OFFICIAL_SHOP}>
+          Comprar na loja oficial <ArrowUpRight size={16} strokeWidth={2.6} />
         </Button>
+        <small className="muted center">A compra é feita no site oficial da FURIA, com os preços normais.</small>
       </div>
-    </>
-  )
-}
-
-export function Cart() {
-  const { cart } = useStore()
-  const nav = useNavigate()
-  const items = cart.map((c, i) => ({ ...c, i, p: PRODUCTS.find((p) => p.id === c.productId)! })).filter((x) => x.p)
-  const full = items.reduce((s, x) => s + x.p.price, 0)
-  const total = items.reduce((s, x) => s + levelPrice(x.p), 0)
-  return (
-    <>
-      <NavHeader title="Carrinho" />
-      {items.length === 0 ? (
-        <div className="empty">
-          <p>Seu carrinho está vazio.</p>
-          <Button to="/loja">Ir para a loja</Button>
-        </div>
-      ) : (
-        <>
-          <div className="stack">
-            {items.map((x) => (
-              <div key={x.i} className="card cart-row">
-                <span className="cart-row__img" style={{ backgroundImage: `url(${x.p.images[0]})` }} />
-                <span className="cart-row__info">
-                  <b className="body-bold">{x.p.name}</b>
-                  <small className="muted">Tamanho {x.size}</small>
-                  <b className="mono-m">{money(levelPrice(x.p))}</b>
-                </span>
-                <button className="icon-btn" aria-label="Remover" onClick={() => actions.removeFromCart(x.i)}>
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            ))}
-          </div>
-          <div className="card totals">
-            <div className="row-between"><span>Subtotal</span><span>{money(full)}</span></div>
-            <div className="row-between"><span>Desconto Pantera (20%)</span><span className="green">−{money(full - total)}</span></div>
-            <div className="row-between"><span>Frete</span><span>{total >= 250 ? 'Grátis' : money(19.9)}</span></div>
-            <div className="row-between total"><b>Total</b><b className="mono-score">{money(total + (total >= 250 ? 0 : 19.9))}</b></div>
-          </div>
-          <Button full onClick={() => nav('/loja')}>Finalizar na loja FURIA</Button>
-          <small className="muted center">Protótipo: o checkout real abre na loja oficial, com o cupom do seu nível.</small>
-        </>
-      )}
     </>
   )
 }

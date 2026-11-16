@@ -30,11 +30,25 @@ async function ps<T>(path: string, token: string): Promise<T> {
   return r.json() as Promise<T>
 }
 
-/** Acha o time principal da FURIA no jogo (ignora academy, feminino etc.). */
-async function furiaId(slug: string, token: string): Promise<number | null> {
-  const teams = await ps<PSTeam[]>(`/${slug}/teams?search[name]=FURIA&per_page=20`, token)
-  const exact = teams.find((t) => t.name.trim().toUpperCase() === 'FURIA') ?? teams.find((t) => /^furia( esports)?$/i.test(t.name.trim()))
-  return exact?.id ?? null
+const NOT_MAIN = /academy|fe\b|female|women|feminino|youth|junior|\bjr\b|\b2\b/i
+
+/**
+ * Acha o time principal da FURIA no jogo. A PandaScore pode ter mais de um
+ * cadastro com o nome (times antigos, academy, feminino): entre os candidatos,
+ * fica com o que jogou mais recentemente.
+ */
+async function furiaTeam(slug: string, token: string): Promise<PSTeam | null> {
+  const teams = await ps<PSTeam[]>(`/${slug}/teams?search[name]=FURIA&per_page=50`, token)
+  const candidates = teams.filter((t) => /^furia/i.test(t.name.trim()) && !NOT_MAIN.test(t.name))
+  if (candidates.length <= 1) return candidates[0] ?? null
+  const latest = await Promise.all(
+    candidates.map(async (t) => {
+      const [m] = await ps<PSMatch[]>(`/${slug}/matches/past?filter[opponent_id]=${t.id}&per_page=1&sort=-begin_at`, token)
+      return { t, at: Date.parse(m?.begin_at ?? '') || 0 }
+    }),
+  )
+  latest.sort((a, b) => b.at - a.at)
+  return latest[0].t
 }
 
 function normalize(m: PSMatch, game: string, furia: number) {
@@ -62,12 +76,15 @@ export default async function handler() {
   const upcoming: ReturnType<typeof normalize>[] = []
   const results: ReturnType<typeof normalize>[] = []
   const errors: string[] = []
+  const teams: Record<string, { id: number; name: string } | null> = {}
 
   await Promise.all(
     Object.entries(GAMES).map(async ([slug, game]) => {
       try {
-        const id = await furiaId(slug, token)
-        if (!id) return errors.push(`FURIA não encontrada em ${game}`)
+        const team = await furiaTeam(slug, token)
+        teams[game] = team && { id: team.id, name: team.name }
+        if (!team) return errors.push(`FURIA não encontrada em ${game}`)
+        const id = team.id
         const q = `filter[opponent_id]=${id}`
         const [running, next, past] = await Promise.all([
           ps<PSMatch[]>(`/${slug}/matches/running?${q}&per_page=5`, token),
@@ -75,7 +92,9 @@ export default async function handler() {
           ps<PSMatch[]>(`/${slug}/matches/past?${q}&per_page=6&sort=-begin_at`, token),
         ])
         upcoming.push(...[...running, ...next].map((m) => normalize(m, game, id)))
-        results.push(...past.filter((m) => m.status === 'finished').map((m) => normalize(m, game, id)))
+        const done = past.filter((m) => m.status === 'finished')
+        if (!done.length) errors.push(`Sem resultados de ${game} para o time ${team.name} (#${team.id})`)
+        results.push(...done.map((m) => normalize(m, game, id)))
       } catch (e) {
         errors.push(String((e as Error).message))
       }
@@ -84,7 +103,7 @@ export default async function handler() {
 
   upcoming.sort((a, b) => (a.startAt ?? 0) - (b.startAt ?? 0))
   results.sort((a, b) => (b.startAt ?? 0) - (a.startAt ?? 0))
-  return json({ updatedAt: new Date().toISOString(), upcoming, results, errors }, 200)
+  return json({ updatedAt: new Date().toISOString(), teams, upcoming, results, errors }, 200)
 }
 
 function json(body: unknown, status: number) {
