@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Bell, ChevronRight, CircleHelp, Gamepad2, Lock, LogOut, Pencil } from 'lucide-react'
-import { ACHIEVEMENTS, ACHIEVEMENTS_TOTAL, PREFERRED_GAMES, WAYS_TO_EARN } from '../data'
+import { ACHIEVEMENTS, ACHIEVEMENTS_TOTAL, MODALITIES, WAYS_TO_EARN } from '../data'
 import { AchievementBadge, Button, LevelCard, Section, Sheet } from '../components'
 import { actions, useStore } from '../store'
 
@@ -12,7 +12,7 @@ const BENEFITS = [
 ]
 
 export default function Profile() {
-  const { name } = useStore()
+  const { name, games } = useStore()
   const [help, setHelp] = useState(false)
   const [all, setAll] = useState(false)
   const [editing, setEditing] = useState(false)
@@ -75,7 +75,7 @@ export default function Profile() {
           </button>
           <div className="settings__row">
             <Gamepad2 size={20} />
-            <span><b className="body-bold">Modalidades favoritas</b><small className="muted">{PREFERRED_GAMES.join(' · ')}</small></span>
+            <span><b className="body-bold">Modalidades favoritas</b><small className="muted">{MODALITIES.filter((m) => games.includes(m.id)).map((m) => (m.id === 'LoL' ? 'LoL' : m.name)).join(' · ')}</small></span>
             <Lock size={16} className="muted" />
           </div>
           <div className="settings__row">

@@ -1,11 +1,13 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { MATCHES, PREFERRED_GAMES, RESULTS, TEAMS, Game } from '../data'
+import { MATCHES, RESULTS, TEAMS, Game } from '../data'
+import { useMyGames } from '../store'
 import { GameLogo, LiveFlame, NavHeader, ResultCard } from '../components'
 import { fmtDay, fmtTime, matchStart } from '../time'
 
 export default function Agenda() {
   const [params, setParams] = useSearchParams()
+  const mine = useMyGames()
   const tab = params.get('aba') === 'resultados' ? 'resultados' : 'proximos'
   const game = (params.get('jogo') as Game | null) ?? null
   const set = (k: string, v: string | null) => {
@@ -15,13 +17,13 @@ export default function Agenda() {
     setParams(p, { replace: true })
   }
 
-  const matches = MATCHES.filter((m) => PREFERRED_GAMES.includes(m.game) && (!game || m.game === game)).sort((a, b) => matchStart(a) - matchStart(b))
+  const matches = MATCHES.filter((m) => mine.includes(m.game) && (!game || m.game === game)).sort((a, b) => matchStart(a) - matchStart(b))
   const days = new Map<string, typeof matches>()
   for (const m of matches) {
     const key = m.live ? 'Agora' : fmtDay(matchStart(m))
     days.set(key, [...(days.get(key) ?? []), m])
   }
-  const results = RESULTS.filter((r) => !game || r.game === game)
+  const results = RESULTS.filter((r) => mine.includes(r.game) && (!game || r.game === game))
 
   return (
     <>
@@ -35,7 +37,7 @@ export default function Agenda() {
       </div>
       <div className="chips chips--scroll">
         <button className={`chip${!game ? ' chip--on' : ''}`} onClick={() => set('jogo', null)}>Todos</button>
-        {PREFERRED_GAMES.map((g) => (
+        {mine.map((g) => (
           <button key={g} className={`chip chip--logo${game === g ? ' chip--on' : ''}`} onClick={() => set('jogo', g)}>
             <GameLogo game={g} size={16} /> {g}
           </button>

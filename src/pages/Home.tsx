@@ -1,16 +1,16 @@
 import { useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { ACHIEVEMENTS, MATCHES, PREFERRED_GAMES, RESULTS } from '../data'
+import { ACHIEVEMENTS, MATCHES, RESULTS } from '../data'
 import { AchievementBadge, AppHeader, Button, Carousel, Divider, MatchCard, ResultCard, Section } from '../components'
-import { useStore } from '../store'
+import { useMyGames, useStore } from '../store'
 import { matchStart } from '../time'
-
-const rank = (g: string) => PREFERRED_GAMES.indexOf(g as never)
 
 export default function Home() {
   const { name } = useStore()
+  const mine = useMyGames()
+  const rank = (g: string) => mine.indexOf(g as never)
   const upcoming = [...MATCHES]
-    .filter((m) => PREFERRED_GAMES.includes(m.game))
+    .filter((m) => mine.includes(m.game))
     .sort((a, b) => Number(!!b.live) - Number(!!a.live) || matchStart(a) - matchStart(b) || rank(a.game) - rank(b.game))
   const today = upcoming.filter((m) => new Date(matchStart(m)).toDateString() === new Date().toDateString())
   const live = upcoming.filter((m) => m.live).length
@@ -47,7 +47,7 @@ export default function Home() {
 
       <Section title="Resultados" link={{ to: '/agenda?aba=resultados', label: 'Ver todos' }}>
         <Carousel>
-          {[...RESULTS].sort((a, b) => rank(a.game) - rank(b.game)).map((r) => (
+          {RESULTS.filter((r) => mine.includes(r.game)).sort((a, b) => rank(a.game) - rank(b.game)).map((r) => (
             <ResultCard key={r.id} result={r} />
           ))}
         </Carousel>

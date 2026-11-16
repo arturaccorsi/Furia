@@ -6,6 +6,16 @@ export type Game = 'CS2' | 'LoL' | 'Valorant'
 /** Modalidades que o torcedor acompanha, em ordem de preferência. */
 export const PREFERRED_GAMES: Game[] = ['CS2', 'LoL', 'Valorant']
 
+/** Modalidades da FURIA que aparecem no onboarding. */
+export const MODALITIES: { id: string; name: string; genre: string; logo: string }[] = [
+  { id: 'CS2', name: 'CS2', genre: 'FPS tático', logo: '/img/cs2.webp' },
+  { id: 'LoL', name: 'League of Legends', genre: 'MOBA', logo: '/img/lol.webp' },
+  { id: 'Valorant', name: 'Valorant', genre: 'FPS tático', logo: '/img/valorant.webp' },
+  { id: 'R6', name: 'Rainbow Six', genre: 'FPS tático', logo: '/img/r6.webp' },
+  { id: 'Kings League', name: 'Kings League', genre: 'Futebol 7', logo: '/img/kings-league.webp' },
+  { id: 'Rocket League', name: 'Rocket League', genre: 'Carros + bola', logo: '/img/rocket-league.webp' },
+]
+
 export const GAME_LOGO: Record<Game, string> = {
   CS2: '/img/cs2.webp',
   LoL: '/img/lol.webp',

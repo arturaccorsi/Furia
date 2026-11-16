@@ -1,4 +1,5 @@
 import { useSyncExternalStore } from 'react'
+import { Game, PREFERRED_GAMES } from './data'
 
 // Estado do torcedor guardado só neste navegador (sem login real por enquanto).
 
@@ -7,6 +8,8 @@ export type Palpite = { winner: 'furia' | 'opp'; score: string }
 
 type State = {
   name: string | null
+  /** modalidades marcadas no onboarding */
+  games: string[]
   cart: CartItem[]
   palpites: Record<string, Palpite>
   reminders: string[]
@@ -14,7 +17,7 @@ type State = {
 }
 
 const KEY = 'furia-torcida:v1'
-const empty: State = { name: null, cart: [], palpites: {}, reminders: [], checkins: [] }
+const empty: State = { name: null, games: ['CS2', 'LoL', 'Valorant'], cart: [], palpites: {}, reminders: [], checkins: [] }
 
 function load(): State {
   try {
@@ -50,6 +53,7 @@ export function useStore() {
 
 export const actions = {
   setName: (name: string) => set({ name: name.trim() }),
+  setGames: (games: string[]) => set({ games }),
   logout: () => set({ ...empty }),
   addToCart: (item: CartItem) => set({ cart: [...state.cart, item] }),
   removeFromCart: (index: number) => set({ cart: state.cart.filter((_, i) => i !== index) }),
@@ -61,4 +65,11 @@ export const actions = {
         : [...state.reminders, matchId],
     }),
   checkin: (matchId: string) => set({ checkins: [...new Set([...state.checkins, matchId])] }),
+}
+
+/** Modalidades com jogos no app, na ordem de preferência, filtradas pelo que o torcedor marcou. */
+export function useMyGames(): Game[] {
+  const { games } = useStore()
+  const mine = PREFERRED_GAMES.filter((g) => games.includes(g))
+  return mine.length ? mine : PREFERRED_GAMES
 }
