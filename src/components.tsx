@@ -1,7 +1,7 @@
 import { ReactNode, RefObject, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
-import { ArrowRight, ArrowUpRight, Bell, CalendarDays, ChevronLeft, Play, ShoppingBag, User, X } from 'lucide-react'
-import { Achievement, GAME_LOGO, Game, Match, Media, Result, TEAMS, TeamId } from './data'
+import { ArrowRight, ArrowUpRight, Bell, Check, CalendarDays, ChevronLeft, Play, ShoppingBag, User, X } from 'lucide-react'
+import { Achievement, GAME_LOGO, MODALITIES, Game, Match, Media, Result, TEAMS, TeamId } from './data'
 import { countdown, fmtDay, fmtTime, matchStart, useNow } from './time'
 import { actions, useStore } from './store'
 
@@ -383,6 +383,27 @@ export function Divider() {
       <span />
       <img src="/img/olho.webp" alt="" />
       <span />
+    </div>
+  )
+}
+
+/** Grade de modalidades do onboarding (também usada no Perfil). */
+export function ModalityGrid({ selected, onToggle }: { selected: string[]; onToggle: (id: string) => void }) {
+  return (
+    <div className="grid-2 modalities">
+      {MODALITIES.map((m) => {
+        const on = selected.includes(m.id)
+        return (
+          <button type="button" key={m.id} className={`card modality${on ? ' modality--on' : ''}`} onClick={() => onToggle(m.id)} aria-pressed={on}>
+            <span className="modality__top">
+              <span className="modality__logo"><img src={m.logo} alt="" /></span>
+              <span className="modality__check">{on && <Check size={15} strokeWidth={3.5} />}</span>
+            </span>
+            <b className="heading">{m.name}</b>
+            <small className={on ? '' : 'muted'}>{m.genre}</small>
+          </button>
+        )
+      })}
     </div>
   )
 }

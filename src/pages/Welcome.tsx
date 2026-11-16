@@ -1,9 +1,8 @@
 import { FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { Check } from 'lucide-react'
 import { actions } from '../store'
 import { MODALITIES, PREFERRED_GAMES } from '../data'
-import { Button } from '../components'
+import { Button, ModalityGrid } from '../components'
 
 export default function Welcome() {
   const [name, setName] = useState('')
@@ -45,21 +44,7 @@ export default function Welcome() {
         <p className="caption muted">A gente monta sua agenda e só te avisa do que importa. Dá pra mudar depois no Perfil.</p>
       </div>
 
-      <div className="grid-2 modalities">
-        {MODALITIES.map((m) => {
-          const on = games.includes(m.id)
-          return (
-            <button type="button" key={m.id} className={`card modality${on ? ' modality--on' : ''}`} onClick={() => toggle(m.id)} aria-pressed={on}>
-              <span className="modality__top">
-                <span className="modality__logo"><img src={m.logo} alt="" /></span>
-                <span className="modality__check">{on && <Check size={15} strokeWidth={3.5} />}</span>
-              </span>
-              <b className="heading">{m.name}</b>
-              <small className={on ? '' : 'muted'}>{m.genre}</small>
-            </button>
-          )
-        })}
-      </div>
+      <ModalityGrid selected={games} onToggle={toggle} />
 
       <div className="welcome__cta">
         <span>

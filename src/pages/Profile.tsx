@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
-import { Bell, ChevronRight, CircleHelp, Gamepad2, Lock, LogOut, Pencil } from 'lucide-react'
+import { Bell, ChevronRight, CircleHelp, Gamepad2, LogOut, Pencil } from 'lucide-react'
 import { ACHIEVEMENTS, ACHIEVEMENTS_TOTAL, MODALITIES, WAYS_TO_EARN } from '../data'
-import { AchievementBadge, Button, LevelCard, Section, Sheet } from '../components'
+import { AchievementBadge, Button, LevelCard, ModalityGrid, Section, Sheet } from '../components'
 import { actions, useStore } from '../store'
 
 const BENEFITS = [
@@ -16,6 +16,8 @@ export default function Profile() {
   const [help, setHelp] = useState(false)
   const [all, setAll] = useState(false)
   const [editing, setEditing] = useState(false)
+  const [editingGames, setEditingGames] = useState(false)
+  const [draftGames, setDraftGames] = useState<string[]>(games)
   const [draft, setDraft] = useState(name ?? '')
   const nav = useNavigate()
   const { hash } = useLocation()
@@ -73,11 +75,17 @@ export default function Profile() {
             <span><b className="body-bold">Nome</b><small className="muted">{name}</small></span>
             <ChevronRight size={18} />
           </button>
-          <div className="settings__row">
+          <button
+            className="settings__row"
+            onClick={() => {
+              setDraftGames(games)
+              setEditingGames(true)
+            }}
+          >
             <Gamepad2 size={20} />
             <span><b className="body-bold">Modalidades favoritas</b><small className="muted">{MODALITIES.filter((m) => games.includes(m.id)).map((m) => (m.id === 'LoL' ? 'LoL' : m.name)).join(' · ')}</small></span>
-            <Lock size={16} className="muted" />
-          </div>
+            <ChevronRight size={18} />
+          </button>
           <div className="settings__row">
             <Bell size={20} />
             <span><b className="body-bold">Notificações</b><small className="muted">Jogos, palpites e drops</small></span>
@@ -112,6 +120,25 @@ export default function Profile() {
           ))}
         </div>
         <Button full onClick={() => setHelp(false)}>Entendi</Button>
+      </Sheet>
+
+      <Sheet open={editingGames} onClose={() => setEditingGames(false)} title="Suas modalidades">
+        <p className="caption muted">Marque os times da FURIA que você acompanha. A home e a agenda mostram só esses jogos.</p>
+        <ModalityGrid
+          selected={draftGames}
+          onToggle={(id) => setDraftGames((g) => (g.includes(id) ? g.filter((x) => x !== id) : [...g, id]))}
+        />
+        {draftGames.length === 0 && <small className="red">Marque pelo menos uma modalidade.</small>}
+        <Button
+          full
+          disabled={draftGames.length === 0}
+          onClick={() => {
+            actions.setGames(draftGames)
+            setEditingGames(false)
+          }}
+        >
+          Salvar
+        </Button>
       </Sheet>
 
       <Sheet open={editing} onClose={() => setEditing(false)} title="Seu nome">
