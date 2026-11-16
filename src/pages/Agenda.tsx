@@ -1,6 +1,7 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { MATCHES, RESULTS, TEAMS, Game } from '../data'
+import { Game, teamInfo } from '../data'
+import { useMatchData } from '../live'
 import { useMyGames } from '../store'
 import { GameLogo, LiveFlame, NavHeader, ResultCard } from '../components'
 import { fmtDay, fmtTime, matchStart } from '../time'
@@ -8,6 +9,7 @@ import { fmtDay, fmtTime, matchStart } from '../time'
 export default function Agenda() {
   const [params, setParams] = useSearchParams()
   const mine = useMyGames()
+  const { matches: MATCHES, results: RESULTS } = useMatchData()
   const tab = params.get('aba') === 'resultados' ? 'resultados' : 'proximos'
   const game = (params.get('jogo') as Game | null) ?? null
   const set = (k: string, v: string | null) => {
@@ -53,7 +55,7 @@ export default function Agenda() {
                 <b className="mono-m">{m.live ? <LiveFlame size={18} color="var(--red)" /> : fmtTime(matchStart(m))}</b>
                 <span className="agenda-row__bar" />
                 <span className="agenda-row__info">
-                  <b className="body-bold">FURIA vs {TEAMS[m.opponent].name}</b>
+                  <b className="body-bold">FURIA vs {teamInfo(m.opponent).name}</b>
                   <small className="muted">{m.live ? 'Ao vivo · ' : ''}{m.game} · {m.event}</small>
                 </span>
                 <ChevronRight size={20} />

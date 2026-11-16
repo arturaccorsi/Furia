@@ -1,7 +1,7 @@
 import { ReactNode, RefObject, useEffect, useRef } from 'react'
 import { Link, NavLink, useNavigate } from 'react-router-dom'
 import { ArrowRight, ArrowUpRight, Bell, Check, CalendarDays, ChevronLeft, Play, ShoppingBag, User, X } from 'lucide-react'
-import { Achievement, GAME_LOGO, MODALITIES, Game, Match, Media, Result, TEAMS, TeamId } from './data'
+import { Achievement, GAME_LOGO, MODALITIES, Game, Match, Media, Result, TeamRef, teamInfo } from './data'
 import { countdown, fmtDay, fmtTime, matchStart, useNow } from './time'
 import { actions, useStore } from './store'
 
@@ -82,8 +82,8 @@ export function Button({ children, variant = 'primary', to, href, onClick, full,
   return <button className={cls} onClick={onClick} disabled={disabled}>{children}</button>
 }
 
-export function TeamCrest({ team, size = 64 }: { team: TeamId; size?: number }) {
-  const t = TEAMS[team]
+export function TeamCrest({ team, size = 64 }: { team: TeamRef; size?: number }) {
+  const t = teamInfo(team)
   return (
     <span className="crest" style={{ width: size, height: size }}>
       {t.logo ? <img src={t.logo} alt="" /> : <span className="crest__initials" style={{ fontSize: size * 0.28 }}>{t.name.slice(0, 2).toUpperCase()}</span>}
@@ -91,8 +91,8 @@ export function TeamCrest({ team, size = 64 }: { team: TeamId; size?: number }) 
   )
 }
 
-export function TeamLogo({ team, size = 24 }: { team: TeamId; size?: number }) {
-  const t = TEAMS[team]
+export function TeamLogo({ team, size = 24 }: { team: TeamRef; size?: number }) {
+  const t = teamInfo(team)
   return t.logo ? (
     <img src={t.logo} alt={t.name} style={{ width: size, height: size, objectFit: 'contain' }} />
   ) : (
@@ -130,7 +130,7 @@ export function MatchCard({ match }: { match: Match }) {
   const { reminders } = useStore()
   const start = matchStart(match)
   const isToday = new Date(start).toDateString() === new Date().toDateString()
-  const opp = TEAMS[match.opponent]
+  const opp = teamInfo(match.opponent)
   return (
     <article className="card match-card">
       {match.live ? <LiveTag /> : isToday ? <span className="sticker">Hoje!</span> : null}
@@ -154,10 +154,17 @@ export function MatchCard({ match }: { match: Match }) {
       </div>
       <div className="match-card__center">
         {match.live ? (
-          <>
-            <small>Mapa {match.live.mapNumber} · {match.live.map} · em andamento</small>
-            <b className="score-xl">{match.live.score[0]} : {match.live.score[1]}</b>
-          </>
+          match.live.score ? (
+            <>
+              <small>Mapa {match.live.mapNumber} · {match.live.map} · em andamento</small>
+              <b className="score-xl">{match.live.score[0]} : {match.live.score[1]}</b>
+            </>
+          ) : (
+            <>
+              <small>Série em andamento</small>
+              <b className="score-xl">{match.live.series[0]} : {match.live.series[1]}</b>
+            </>
+          )
         ) : (
           <>
             <small>{fmtDay(start)} · {fmtTime(start)} · começa em</small>
@@ -196,7 +203,7 @@ export function ResultCard({ result }: { result: Result }) {
         <small>vs</small>
         <TeamLogo team={result.opponent} />
       </div>
-      <b className="heading">vs {TEAMS[result.opponent].name}</b>
+      <b className="heading">vs {teamInfo(result.opponent).name}</b>
       <b className="mono-score">{result.score[0]} : {result.score[1]}</b>
       <small className="muted">{result.event}</small>
     </article>

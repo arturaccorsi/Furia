@@ -39,3 +39,11 @@ O site funciona sem Supabase (tudo fica no navegador). Para ligar:
 3. Rode `npm run dev`. As sugestões da história do FalleN passam a ir para a tabela `sugestoes`.
 
 Na hospedagem (Vercel, Netlify), cadastre as mesmas duas variáveis de ambiente.
+
+## PandaScore (partidas reais)
+
+A função `api/partidas.ts` roda na Vercel, consulta a PandaScore e devolve ao site as partidas da FURIA em CS2, LoL e Valorant (ao vivo, próximas e últimos resultados). O resultado fica em cache por 5 minutos.
+
+- Cadastre o token na Vercel como `PANDASCORE_TOKEN` (sem `VITE_`, como segredo). Ele nunca vai para o navegador.
+- Sem o token, ou rodando local com `npm run dev`, o site usa os dados de demonstração de `src/data.ts`.
+- Para conferir, abra `/api/partidas` no site publicado.

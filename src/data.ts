@@ -35,21 +35,28 @@ export const TEAMS: Record<TeamId, { name: string; logo?: string }> = {
   betboom: { name: 'BetBoom' },
 }
 
+/** Time conhecido (com logo local) ou vindo da PandaScore. */
+export type TeamRef = TeamId | { name: string; logo?: string }
+export const teamInfo = (t: TeamRef): { name: string; logo?: string } => (typeof t === 'string' ? TEAMS[t] : t)
+
 export type MapResult = { name: string; pick: string; furia: number; opp: number; state: 'win' | 'loss' | 'live' | 'next' }
 
 export type Match = {
   id: string
   game: Game
   event: string
-  opponent: TeamId
-  format: 'MD3' | 'MD5'
+  opponent: TeamRef
+  format: string
   /** minutos a partir de agora (negativo = já começou), arredondado para a meia hora seguinte */
   startsIn?: number
   /** dia relativo a hoje e horário fixo (Brasília) */
   at?: { day: number; time: string }
-  live?: { series: [number, number]; map: string; mapNumber: number; score: [number, number]; round: number }
+  /** horário absoluto (partidas reais da PandaScore) */
+  startAt?: number
+  /** mapa e rodada só existem nos dados de demonstração (na PandaScore são do plano pago) */
+  live?: { series: [number, number]; map?: string; mapNumber?: number; score?: [number, number]; round?: number }
   maps?: MapResult[]
-  crowdPick: number
+  crowdPick?: number
   stream?: string
 }
 
@@ -79,7 +86,7 @@ export const MATCHES: Match[] = [
   { id: 'val-sen-vct', game: 'Valorant', event: 'VCT Americas · Final', opponent: 'sentinels', format: 'MD5', at: { day: 4, time: '20:00' }, crowdPick: 47 },
 ]
 
-export type Result = { id: string; game: Game; opponent: TeamId; score: [number, number]; event: string }
+export type Result = { id: string; game: Game; opponent: TeamRef; score: [number, number]; event: string }
 
 export const RESULTS: Result[] = [
   { id: 'r1', game: 'CS2', opponent: 'nemiga', score: [3, 2], event: 'PGL Masters Bucharest · Final' },

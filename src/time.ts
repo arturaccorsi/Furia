@@ -12,7 +12,8 @@ export function useNow(intervalMs = 1000) {
   return now
 }
 
-export function matchStart(m: { startsIn?: number; at?: { day: number; time: string } }) {
+export function matchStart(m: { startsIn?: number; at?: { day: number; time: string }; startAt?: number }) {
+  if (m.startAt) return m.startAt
   if (m.at) {
     const d = new Date(OPENED_AT)
     const [h, min] = m.at.time.split(':').map(Number)

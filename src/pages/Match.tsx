@@ -1,14 +1,17 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { Check, Lock, MapPin } from 'lucide-react'
-import { MATCHES, Match as M, TEAMS } from '../data'
+import { Match as M, teamInfo } from '../data'
+import { useMatchData } from '../live'
 import { Button, Countdown, LiveFlame, LiveTag, NavHeader, Section, TeamCrest } from '../components'
 import { actions, useStore } from '../store'
 import { fmtDay, fmtTime, matchStart } from '../time'
 
 export default function Match() {
   const { id } = useParams()
-  const match = MATCHES.find((m) => m.id === id)
+  const { matches, source } = useMatchData()
+  const match = matches.find((m) => m.id === id)
+  if (!match && source === 'loading') return <NavHeader title="Partida" />
   if (!match) {
     return (
       <>
@@ -18,7 +21,7 @@ export default function Match() {
     )
   }
   const start = matchStart(match)
-  const opp = TEAMS[match.opponent]
+  const opp = teamInfo(match.opponent)
   return (
     <>
       <NavHeader title="Partida" />
@@ -45,8 +48,17 @@ export default function Match() {
         <div className="match-card__center">
           {match.live ? (
             <>
-              <small>Mapa {match.live.mapNumber} · {match.live.map} · em andamento</small>
-              <b className="score-xl">{match.live.score[0]} : {match.live.score[1]}</b>
+              {match.live.score ? (
+                <>
+                  <small>Mapa {match.live.mapNumber} · {match.live.map} · em andamento</small>
+                  <b className="score-xl">{match.live.score[0]} : {match.live.score[1]}</b>
+                </>
+              ) : (
+                <>
+                  <small>Série em andamento</small>
+                  <b className="score-xl">{match.live.series[0]} : {match.live.series[1]}</b>
+                </>
+              )}
             </>
           ) : (
             <>
@@ -151,7 +163,11 @@ function CheckinCard({ match }: { match: M }) {
   )
 }
 
-const scoreOptions = (m: M) => (m.format === 'MD5' ? ['3 – 0', '3 – 1', '3 – 2'] : ['2 – 0', '2 – 1'])
+const scoreOptions = (m: M) => {
+  const n = Number(m.format.replace(/\D/g, '')) || 3
+  const win = Math.ceil(n / 2)
+  return n === 1 ? ['1 – 0'] : Array.from({ length: win }, (_, i) => `${win} – ${i}`)
+}
 
 function ClosedBet({ match }: { match: M }) {
   const { palpites } = useStore()
@@ -167,14 +183,14 @@ function ClosedBet({ match }: { match: M }) {
           <TeamCrest team={p.winner === 'furia' ? 'furia' : match.opponent} size={40} />
           <span>
             <span className="mono-label">Você apostou em</span>
-            <b>{p.winner === 'furia' ? 'FURIA' : TEAMS[match.opponent].name} vence por {p.score}</b>
+            <b>{p.winner === 'furia' ? 'FURIA' : teamInfo(match.opponent).name} vence por {p.score}</b>
           </span>
           <span className="pts-tag pts-tag--dashed">+50 pts</span>
         </div>
       ) : (
         <p className="muted caption">Você não deu palpite nesta série.</p>
       )}
-      <small className="muted">{match.crowdPick}% da torcida foi de FURIA.</small>
+      {match.crowdPick != null && <small className="muted">{match.crowdPick}% da torcida foi de FURIA.</small>}
       <p className="note note--dashed caption muted">
         <Lock size={16} /> Os palpites fecham antes do início da série. Com a partida ao vivo, não dá mais pra alterar.
       </p>
@@ -188,7 +204,7 @@ function OpenBet({ match }: { match: M }) {
   const [winner, setWinner] = useState<'furia' | 'opp'>(saved?.winner ?? 'furia')
   const [score, setScore] = useState(saved?.score ?? scoreOptions(match)[1])
   const [editing, setEditing] = useState(!saved)
-  const opp = TEAMS[match.opponent]
+  const opp = teamInfo(match.opponent)
 
   if (saved && !editing) {
     return (
@@ -231,7 +247,7 @@ function OpenBet({ match }: { match: M }) {
           </button>
         ))}
       </div>
-      <small className="muted">{match.crowdPick}% da torcida vai de FURIA. Os palpites fecham no início da série.</small>
+      <small className="muted">{match.crowdPick != null ? `${match.crowdPick}% da torcida vai de FURIA. ` : ''}Os palpites fecham no início da série.</small>
       <Button
         full
         onClick={() => {

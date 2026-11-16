@@ -1,6 +1,7 @@
 import { useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { ACHIEVEMENTS, MATCHES, RESULTS } from '../data'
+import { ACHIEVEMENTS } from '../data'
+import { useMatchData } from '../live'
 import { AchievementBadge, AppHeader, Button, Carousel, Divider, MatchCard, ResultCard, Section } from '../components'
 import { useMyGames, useStore } from '../store'
 import { matchStart } from '../time'
@@ -8,6 +9,7 @@ import { matchStart } from '../time'
 export default function Home() {
   const { name } = useStore()
   const mine = useMyGames()
+  const { matches: MATCHES, results: RESULTS } = useMatchData()
   const rank = (g: string) => mine.indexOf(g as never)
   const upcoming = [...MATCHES]
     .filter((m) => mine.includes(m.game))
