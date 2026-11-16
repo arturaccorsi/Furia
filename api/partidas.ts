@@ -1,0 +1,128 @@
+// Função da Vercel (Edge) que consulta a PandaScore com o token secreto
+// PANDASCORE_TOKEN e devolve ao site só as partidas da FURIA, já normalizadas.
+// O token nunca vai para o navegador.
+
+export const config = { runtime: 'edge' }
+
+const API = 'https://api.pandascore.co'
+// jogo do site -> slugs da PandaScore onde procurar o time (o primeiro é o atual).
+// No Counter-Strike, o CS2 tem cadastro próprio ("cs2"); "csgo" fica como reserva.
+const GAMES: Record<'CS2' | 'LoL' | 'Valorant', string[]> = { CS2: ['cs2', 'csgo'], LoL: ['lol'], Valorant: ['valorant'] }
+
+type PSTeam = { id: number; name: string; acronym?: string | null; image_url?: string | null }
+type PSMatch = {
+  id: number
+  name: string
+  status: string
+  begin_at: string | null
+  scheduled_at: string | null
+  number_of_games: number
+  opponents: { opponent: PSTeam }[]
+  results: { team_id: number; score: number }[]
+  league?: { name?: string } | null
+  serie?: { full_name?: string; name?: string | null } | null
+  tournament?: { name?: string } | null
+  streams_list?: { raw_url: string; main?: boolean; language?: string }[]
+}
+
+async function ps<T>(path: string, token: string): Promise<T> {
+  const r = await fetch(`${API}${path}`, { headers: { Authorization: `Bearer ${token}`, Accept: 'application/json' } })
+  if (!r.ok) throw new Error(`PandaScore ${r.status} em ${path.split('?')[0]}`)
+  return r.json() as Promise<T>
+}
+
+const NOT_MAIN = /academy|fe\b|female|women|feminino|youth|junior|\bjr\b|\b2\b/i
+
+/**
+ * Acha o time principal da FURIA no jogo. A PandaScore pode ter mais de um
+ * cadastro com o nome (times antigos, academy, feminino): entre os candidatos,
+ * fica com o que jogou mais recentemente.
+ */
+async function furiaTeam(slugs: string[], token: string): Promise<PSTeam | null> {
+  const found = await Promise.all(
+    slugs.map((slug) => ps<PSTeam[]>(`/${slug}/teams?search[name]=FURIA&per_page=50`, token).catch(() => [] as PSTeam[])),
+  )
+  const seen = new Set<number>()
+  const candidates = found
+    .flat()
+    .filter((t) => /^furia/i.test(t.name.trim()) && !NOT_MAIN.test(t.name))
+    .filter((t) => !seen.has(t.id) && seen.add(t.id))
+  if (candidates.length <= 1) return candidates[0] ?? null
+  const latest = await Promise.all(
+    candidates.map(async (t) => {
+      const [m] = await ps<PSMatch[]>(`/matches/past?filter[opponent_id]=${t.id}&per_page=1&sort=-begin_at`, token)
+      return { t, at: Date.parse(m?.begin_at ?? '') || 0 }
+    }),
+  )
+  latest.sort((a, b) => b.at - a.at)
+  return latest[0].t
+}
+
+function normalize(m: PSMatch, game: string, furia: number) {
+  const opp = m.opponents.map((o) => o.opponent).find((t) => t.id !== furia)
+  const score = (id?: number) => m.results.find((r) => r.team_id === id)?.score ?? 0
+  const stream = m.streams_list?.find((s) => s.main)?.raw_url ?? m.streams_list?.[0]?.raw_url
+  const event = [m.league?.name, m.serie?.full_name || m.serie?.name, m.tournament?.name].filter(Boolean).join(' · ')
+  return {
+    id: `ps-${m.id}`,
+    game,
+    event,
+    opponent: { name: opp?.name || opp?.acronym || 'A definir', logo: opp?.image_url ?? undefined },
+    format: `MD${m.number_of_games}`,
+    startAt: Date.parse(m.begin_at ?? m.scheduled_at ?? '') || null,
+    status: m.status,
+    series: [score(furia), score(opp?.id)] as [number, number],
+    stream,
+  }
+}
+
+export default async function handler() {
+  const token = process.env.PANDASCORE_TOKEN
+  if (!token) return json({ error: 'PANDASCORE_TOKEN não configurado' }, 503)
+
+  const upcoming: ReturnType<typeof normalize>[] = []
+  const results: ReturnType<typeof normalize>[] = []
+  const errors: string[] = []
+  const teams: Record<string, { id: number; name: string } | null> = {}
+
+  await Promise.all(
+    (Object.entries(GAMES) as [keyof typeof GAMES, string[]][]).map(async ([game, slugs]) => {
+      try {
+        const team = await furiaTeam(slugs, token)
+        teams[game] = team && { id: team.id, name: team.name }
+        if (!team) return errors.push(`FURIA não encontrada em ${game}`)
+        const id = team.id
+        // Partidas pelo endpoint geral (/matches), filtrando pelo id do time: o id já
+        // identifica o jogo, e evita depender do slug do jogo (no CS2 o /csgo/matches
+        // pode não trazer as partidas novas).
+        const q = `filter[opponent_id]=${id}`
+        const [running, next, past] = await Promise.all([
+          ps<PSMatch[]>(`/matches/running?${q}&per_page=5`, token),
+          ps<PSMatch[]>(`/matches/upcoming?${q}&per_page=10&sort=begin_at`, token),
+          ps<PSMatch[]>(`/matches/past?${q}&per_page=6&sort=-begin_at`, token),
+        ])
+        upcoming.push(...[...running, ...next].map((m) => normalize(m, game, id)))
+        const done = past.filter((m) => m.status === 'finished')
+        if (!done.length) errors.push(`Sem resultados de ${game} para o time ${team.name} (#${team.id})`)
+        results.push(...done.map((m) => normalize(m, game, id)))
+      } catch (e) {
+        errors.push(String((e as Error).message))
+      }
+    }),
+  )
+
+  upcoming.sort((a, b) => (a.startAt ?? 0) - (b.startAt ?? 0))
+  results.sort((a, b) => (b.startAt ?? 0) - (a.startAt ?? 0))
+  return json({ updatedAt: new Date().toISOString(), teams, upcoming, results, errors }, 200)
+}
+
+function json(body: unknown, status: number) {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      // guarda na borda da Vercel por 1 dia (e serve a versão antiga por mais 1 dia enquanto atualiza)
+      'cache-control': 'public, s-maxage=86400, stale-while-revalidate=86400',
+    },
+  })
+}
