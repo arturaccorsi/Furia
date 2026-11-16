@@ -175,7 +175,7 @@ small { font-size: 12px; font-weight: 600; line-height: 1.35; display: block; }
   border: var(--border); border-radius: 4px; box-shadow: var(--shadow-2);
 }
 .tag-live { background: var(--red); color: var(--white); font: 700 11px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
-.sticker { background: var(--yellow); font: 700 16px/1 var(--f-ribbon); transform: rotate(-4deg); }
+.sticker { background: var(--yellow); color: var(--ink); font: 700 16px/1 var(--f-ribbon); transform: rotate(-4deg); }
 .sticker--static { position: static; transform: rotate(-3deg); align-self: center; }
 .tag-ink, .tag-yellow, .tag-red, .tag-cream, .tag-closed {
   display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
