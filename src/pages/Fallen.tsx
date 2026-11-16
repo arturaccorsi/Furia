@@ -1,10 +1,13 @@
-import { Flag } from 'lucide-react'
+import { useState } from 'react'
+import { Flag, MessageSquarePlus } from 'lucide-react'
 import { RETIREMENT_DATE, STORY_MEDIA, TIMELINE } from '../data'
 import { Button, Carousel, Medallion, MediaCard, NavHeader, Section } from '../components'
 import { useNow } from '../time'
+import SuggestionSheet from './SuggestionSheet'
 
 export default function Fallen() {
   const now = useNow()
+  const [suggest, setSuggest] = useState(false)
   const left = Math.max(0, RETIREMENT_DATE.getTime() - now)
   const days = Math.floor(left / 86_400_000)
   const h = Math.floor((left % 86_400_000) / 3_600_000)
@@ -99,7 +102,15 @@ export default function Fallen() {
             ),
           )}
         </ol>
+        <div className="card suggest-cta">
+          <b className="heading">Faltou algum momento?</b>
+          <small className="muted">Sugira uma correção ou adição à história, com vídeo ou matéria se tiver.</small>
+          <Button full variant="secondary" onClick={() => setSuggest(true)}>
+            <MessageSquarePlus size={18} /> Sugerir correção ou adição
+          </Button>
+        </div>
       </Section>
+      <SuggestionSheet open={suggest} onClose={() => setSuggest(false)} />
     </>
   )
 }

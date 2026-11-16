@@ -5,6 +5,7 @@ import { Game, PREFERRED_GAMES } from './data'
 
 export type CartItem = { productId: string; size: string }
 export type Palpite = { winner: 'furia' | 'opp'; score: string }
+export type Suggestion = { kind: string; moment: string; text: string; link: string; at: string }
 
 type State = {
   name: string | null
@@ -14,10 +15,12 @@ type State = {
   palpites: Record<string, Palpite>
   reminders: string[]
   checkins: string[]
+  /** sugestões para a história do FalleN (sem backend ainda: ficam só aqui) */
+  suggestions: Suggestion[]
 }
 
 const KEY = 'furia-torcida:v1'
-const empty: State = { name: null, games: ['CS2', 'LoL', 'Valorant'], cart: [], palpites: {}, reminders: [], checkins: [] }
+const empty: State = { name: null, games: ['CS2', 'LoL', 'Valorant'], cart: [], palpites: {}, reminders: [], checkins: [], suggestions: [] }
 
 function load(): State {
   try {
@@ -64,6 +67,7 @@ export const actions = {
         ? state.reminders.filter((m) => m !== matchId)
         : [...state.reminders, matchId],
     }),
+  addSuggestion: (s: Suggestion) => set({ suggestions: [...state.suggestions, s] }),
   checkin: (matchId: string) => set({ checkins: [...new Set([...state.checkins, matchId])] }),
 }
 

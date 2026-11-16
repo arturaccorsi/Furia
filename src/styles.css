@@ -457,3 +457,12 @@ small { font-size: 12px; font-weight: 600; line-height: 1.35; display: block; }
 @media (prefers-reduced-motion: reduce) {
   * { animation: none !important; transition: none !important; }
 }
+
+/* ---------- sugestões (FalleN) ---------- */
+.suggest-cta { padding: 16px; display: grid; gap: 6px; border-style: dashed; box-shadow: none; background: var(--cream); }
+.suggest-cta .btn { margin-top: 6px; }
+.suggestion-form { gap: 12px; }
+.suggestion-sent { justify-items: center; text-align: center; gap: 14px; }
+.textarea { resize: vertical; min-height: 110px; font: 500 15px/1.4 var(--f-body); }
+select.input { appearance: none; background: var(--white) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23111' stroke-width='2' fill='none'/%3E%3C/svg%3E") no-repeat right 14px center; padding-right: 36px; font-size: 14px; }
+.right { text-align: right; }
