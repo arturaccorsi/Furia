@@ -29,3 +29,13 @@ npm run build
 - `src/components.tsx`: componentes do design (cards, faixa de título, tab bar etc.)
 - `src/pages/`: uma tela por arquivo
 - `public/img/`: imagens exportadas do Figma e capas dos vídeos
+
+## Supabase
+
+O site funciona sem Supabase (tudo fica no navegador). Para ligar:
+
+1. No painel do Supabase, abra **SQL Editor**, cole o conteúdo de `supabase/migrations/0001_sugestoes.sql` e rode.
+2. Copie `.env.example` para `.env.local` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (em **Project Settings > API**).
+3. Rode `npm run dev`. As sugestões da história do FalleN passam a ir para a tabela `sugestoes`.
+
+Na hospedagem (Vercel, Netlify), cadastre as mesmas duas variáveis de ambiente.

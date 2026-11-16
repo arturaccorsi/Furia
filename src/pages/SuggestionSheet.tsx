@@ -2,7 +2,8 @@ import { FormEvent, useState } from 'react'
 import { CheckCircle2 } from 'lucide-react'
 import { Button, Sheet } from '../components'
 import { TIMELINE } from '../data'
-import { actions } from '../store'
+import { actions, useStore } from '../store'
+import { supabase } from '../supabase'
 
 const KINDS = ['Adição', 'Correção', 'Vídeo ou matéria', 'Outro'] as const
 
@@ -26,6 +27,9 @@ export default function SuggestionSheet({ open, onClose }: { open: boolean; onCl
   const [text, setText] = useState('')
   const [link, setLink] = useState('')
   const [sent, setSent] = useState(false)
+  const [sending, setSending] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const { name } = useStore()
   const url = normalizeUrl(link)
   const linkOk = url !== null
   const valid = text.trim().length >= 10 && linkOk
@@ -41,10 +45,27 @@ export default function SuggestionSheet({ open, onClose }: { open: boolean; onCl
     }, 200)
   }
 
-  const submit = (e: FormEvent) => {
+  const submit = async (e: FormEvent) => {
     e.preventDefault()
-    if (!valid) return
-    actions.addSuggestion({ kind, moment, text: text.trim(), link: url ?? '', at: new Date().toISOString() })
+    if (!valid || sending) return
+    const s = { kind, moment, text: text.trim(), link: url ?? '', at: new Date().toISOString() }
+    setError(null)
+    if (supabase) {
+      setSending(true)
+      const { error } = await supabase.from('sugestoes').insert({
+        tipo: s.kind,
+        momento: s.moment || null,
+        texto: s.text,
+        link: s.link || null,
+        nome: name,
+      })
+      setSending(false)
+      if (error) {
+        setError('Não conseguimos enviar agora. Tente de novo em instantes.')
+        return
+      }
+    }
+    actions.addSuggestion(s)
     setSent(true)
   }
 
@@ -108,7 +129,8 @@ export default function SuggestionSheet({ open, onClose }: { open: boolean; onCl
             {!linkOk && <small className="red">Esse link não parece válido. Confira o endereço do vídeo ou da matéria.</small>}
           </label>
 
-          <Button full disabled={!valid}>Enviar sugestão</Button>
+          {error && <small className="red">{error}</small>}
+          <Button full disabled={!valid || sending}>{sending ? 'Enviando…' : 'Enviar sugestão'}</Button>
         </form>
       )}
     </Sheet>
