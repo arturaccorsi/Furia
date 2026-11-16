@@ -5,9 +5,9 @@
 export const config = { runtime: 'edge' }
 
 const API = 'https://api.pandascore.co'
-// jogo do site -> slugs da PandaScore onde procurar o time (o primeiro é o atual).
-// No Counter-Strike, o CS2 tem cadastro próprio ("cs2"); "csgo" fica como reserva.
-const GAMES: Record<'CS2' | 'LoL' | 'Valorant', string[]> = { CS2: ['cs2', 'csgo'], LoL: ['lol'], Valorant: ['valorant'] }
+// jogo do site -> slug da PandaScore. Pela documentação, o CS2 usa o prefixo
+// /csgo/ ("All Counter-Strike endpoints use the /csgo/ prefix for legacy reasons").
+const GAMES: Record<'CS2' | 'LoL' | 'Valorant', string> = { CS2: 'csgo', LoL: 'lol', Valorant: 'valorant' }
 
 type PSTeam = { id: number; name: string; acronym?: string | null; image_url?: string | null }
 type PSMatch = {
@@ -38,24 +38,28 @@ const NOT_MAIN = /academy|fe\b|female|women|feminino|youth|junior|\bjr\b|\b2\b/i
  * cadastro com o nome (times antigos, academy, feminino): entre os candidatos,
  * fica com o que jogou mais recentemente.
  */
-async function furiaTeam(slugs: string[], token: string): Promise<PSTeam | null> {
-  const found = await Promise.all(
-    slugs.map((slug) => ps<PSTeam[]>(`/${slug}/teams?search[name]=FURIA&per_page=50`, token).catch(() => [] as PSTeam[])),
-  )
-  const seen = new Set<number>()
-  const candidates = found
-    .flat()
-    .filter((t) => /^furia/i.test(t.name.trim()) && !NOT_MAIN.test(t.name))
-    .filter((t) => !seen.has(t.id) && seen.add(t.id))
-  if (candidates.length <= 1) return candidates[0] ?? null
+const isMain = (t: PSTeam) => /^furia/i.test(t.name.trim()) && !NOT_MAIN.test(t.name)
+
+async function furiaTeam(slug: string, token: string): Promise<{ team: PSTeam | null; candidates: PSTeam[] }> {
+  const teams = await ps<PSTeam[]>(`/${slug}/teams?search[name]=FURIA&per_page=50`, token)
+  const candidates = teams.filter(isMain)
+  if (candidates.length <= 1) return { team: candidates[0] ?? null, candidates }
   const latest = await Promise.all(
     candidates.map(async (t) => {
-      const [m] = await ps<PSMatch[]>(`/matches/past?filter[opponent_id]=${t.id}&per_page=1&sort=-begin_at`, token)
+      const [m] = await ps<PSMatch[]>(`/${slug}/matches/past?filter[opponent_id]=${t.id}&per_page=1&sort=-begin_at`, token)
       return { t, at: Date.parse(m?.begin_at ?? '') || 0 }
     }),
   )
   latest.sort((a, b) => b.at - a.at)
-  return latest[0].t
+  return { team: latest[0].t, candidates }
+}
+
+/** Reserva: acha a FURIA pelas partidas recentes com "FURIA" no nome (ex.: "FURIA vs Vitality"). */
+async function furiaFromMatches(slug: string, token: string): Promise<PSTeam | null> {
+  const ms = await ps<PSMatch[]>(`/${slug}/matches/past?search[name]=FURIA&per_page=50&sort=-begin_at`, token)
+  const count = new Map<number, { t: PSTeam; n: number }>()
+  for (const m of ms) for (const { opponent: t } of m.opponents) if (isMain(t)) count.set(t.id, { t, n: (count.get(t.id)?.n ?? 0) + 1 })
+  return [...count.values()].sort((a, b) => b.n - a.n)[0]?.t ?? null
 }
 
 function normalize(m: PSMatch, game: string, furia: number) {
@@ -83,23 +87,32 @@ export default async function handler() {
   const upcoming: ReturnType<typeof normalize>[] = []
   const results: ReturnType<typeof normalize>[] = []
   const errors: string[] = []
-  const teams: Record<string, { id: number; name: string } | null> = {}
+  const teams: Record<string, { id: number; name: string; source: string; candidates: string[] } | null> = {}
 
   await Promise.all(
-    (Object.entries(GAMES) as [keyof typeof GAMES, string[]][]).map(async ([game, slugs]) => {
+    (Object.entries(GAMES) as [keyof typeof GAMES, string][]).map(async ([game, slug]) => {
       try {
-        const team = await furiaTeam(slugs, token)
-        teams[game] = team && { id: team.id, name: team.name }
+        const found = await furiaTeam(slug, token)
+        let team = found.team
+        let source = 'teams'
+        const pastOf = (id: number) => ps<PSMatch[]>(`/${slug}/matches/past?filter[opponent_id]=${id}&per_page=6&sort=-begin_at`, token)
+        let past = team ? await pastOf(team.id) : []
+        // Se o cadastro achado não tem partidas, tenta descobrir o time pelas partidas recentes.
+        if (!past.length) {
+          const alt = await furiaFromMatches(slug, token)
+          if (alt && alt.id !== team?.id) {
+            team = alt
+            source = 'matches'
+            past = await pastOf(alt.id)
+          }
+        }
+        teams[game] = team && { id: team.id, name: team.name, source, candidates: found.candidates.map((c) => `${c.name} #${c.id}`) }
         if (!team) return errors.push(`FURIA não encontrada em ${game}`)
         const id = team.id
-        // Partidas pelo endpoint geral (/matches), filtrando pelo id do time: o id já
-        // identifica o jogo, e evita depender do slug do jogo (no CS2 o /csgo/matches
-        // pode não trazer as partidas novas).
         const q = `filter[opponent_id]=${id}`
-        const [running, next, past] = await Promise.all([
-          ps<PSMatch[]>(`/matches/running?${q}&per_page=5`, token),
-          ps<PSMatch[]>(`/matches/upcoming?${q}&per_page=10&sort=begin_at`, token),
-          ps<PSMatch[]>(`/matches/past?${q}&per_page=6&sort=-begin_at`, token),
+        const [running, next] = await Promise.all([
+          ps<PSMatch[]>(`/${slug}/matches/running?${q}&per_page=5`, token),
+          ps<PSMatch[]>(`/${slug}/matches/upcoming?${q}&per_page=10&sort=begin_at`, token),
         ])
         upcoming.push(...[...running, ...next].map((m) => normalize(m, game, id)))
         const done = past.filter((m) => m.status === 'finished')
