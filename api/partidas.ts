@@ -88,6 +88,7 @@ export default async function handler() {
   const results: ReturnType<typeof normalize>[] = []
   const errors: string[] = []
   const teams: Record<string, { id: number; name: string; source: string; candidates: string[] } | null> = {}
+  const debug: Record<string, unknown> = {}
 
   await Promise.all(
     (Object.entries(GAMES) as [keyof typeof GAMES, string][]).map(async ([game, slug]) => {
@@ -115,8 +116,22 @@ export default async function handler() {
           ps<PSMatch[]>(`/${slug}/matches/upcoming?${q}&per_page=10&sort=begin_at`, token),
         ])
         upcoming.push(...[...running, ...next].map((m) => normalize(m, game, id)))
-        const done = past.filter((m) => m.status === 'finished')
-        if (!done.length) errors.push(`Sem resultados de ${game} para o time ${team.name} (#${team.id})`)
+        const finished = (m: PSMatch) => m.status === 'finished' || m.results.some((r) => r.score > 0)
+        let done = past.filter(finished)
+        let via = 'filter[opponent_id]'
+        // Reserva: partidas com "FURIA" no nome, ficando só com as que têm este time.
+        if (!done.length) {
+          const byName = await ps<PSMatch[]>(`/${slug}/matches/past?search[name]=FURIA&per_page=50&sort=-begin_at`, token)
+          done = byName.filter((m) => m.opponents.some((o) => o.opponent.id === id) && finished(m)).slice(0, 6)
+          via = 'search[name]'
+          debug[game] = {
+            filterCount: past.length,
+            filterStatuses: [...new Set(past.map((m) => m.status))],
+            searchCount: byName.length,
+            searchOpponents: [...new Set(byName.flatMap((m) => m.opponents.map((o) => `${o.opponent.name} #${o.opponent.id}`)))].filter((n) => /furia/i.test(n)),
+          }
+        }
+        if (!done.length) errors.push(`Sem resultados de ${game} para o time ${team.name} (#${team.id}) via ${via}`)
         results.push(...done.map((m) => normalize(m, game, id)))
       } catch (e) {
         errors.push(String((e as Error).message))
@@ -126,7 +141,7 @@ export default async function handler() {
 
   upcoming.sort((a, b) => (a.startAt ?? 0) - (b.startAt ?? 0))
   results.sort((a, b) => (b.startAt ?? 0) - (a.startAt ?? 0))
-  return json({ updatedAt: new Date().toISOString(), teams, upcoming, results, errors }, 200)
+  return json({ updatedAt: new Date().toISOString(), teams, upcoming, results, errors, debug }, 200)
 }
 
 function json(body: unknown, status: number) {
