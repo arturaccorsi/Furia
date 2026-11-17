@@ -132,7 +132,7 @@ export const LEVELS = [
 export const USER_POINTS = 1240
 
 export const WAYS_TO_EARN = [
-  { pts: '+10', title: 'Dar palpite', sub: 'Em qualquer partida' },
+  { pts: '+10', title: 'Dar palpite', sub: 'Em qualquer partida', img: '/img/raio.webp' },
   { pts: '+50', title: 'Acertar o palpite', sub: 'Vencedor e placar', img: '/img/trofeu.webp' },
   { pts: '5 pt / R$ 1', title: 'Comprar na loja', sub: 'Vale com cupom', img: '/img/coracao.webp' },
   { pts: '+100', title: 'Assistiu presencial', sub: 'Check-in pelo app na arena', img: '/img/olho.webp' },
