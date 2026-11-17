@@ -257,16 +257,21 @@ small { font-size: 12px; font-weight: 600; line-height: 1.35; display: block; }
 
 .match-card { position: relative; width: 318px; padding: 16px; display: flex; flex-direction: column; gap: 14px; box-shadow: var(--shadow-4); }
 .match-card--detail { width: auto; margin-top: 14px; }
-.match-card__meta { display: flex; gap: 6px; align-items: baseline; padding-right: 92px; font: 600 12px/1.3 var(--f-body); color: var(--muted); }
+.match-card__meta { display: flex; gap: 6px; align-items: baseline; font: 600 12px/1.3 var(--f-body); color: var(--muted); white-space: nowrap; min-width: 0; }
+.match-card__meta span { overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+/* só reserva espaço à direita quando há selo (Ao vivo / Hoje!) no canto */
+.match-card:has(> .tag-live, > .sticker) .match-card__meta { padding-right: 92px; }
 .match-card__meta b { font: 700 11px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--ink); }
 .match-card__teams { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; }
 .team { display: grid; justify-items: center; gap: 6px; font: 800 16px/1.2 var(--f-body); }
 .match-card__mid { display: grid; justify-items: center; gap: 2px; }
 .match-card__mid small { font: 700 11px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; color: var(--muted); }
 .vs { font: 400 28px/1 var(--f-display); color: var(--red); }
-.match-card__center { display: grid; justify-items: center; gap: 6px; text-align: center; }
+.match-card__center { display: grid; grid-template-rows: auto 40px; align-items: center; justify-items: center; gap: 6px; text-align: center; }
+/* placar ao vivo e contagem regressiva com o mesmo tamanho, para alinhar entre os cards */
+.match-card .score-xl, .match-card .timer__unit b { font-size: 40px; line-height: 1; }
 .match-card__center small { color: var(--muted); }
-.match-card__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.match-card__actions { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: auto; }
 .timer { display: flex; gap: 14px; align-items: baseline; }
 .timer__unit { display: inline-flex; align-items: baseline; gap: 3px; }
 .timer__unit b { font: 700 24px/1 var(--f-mono); }

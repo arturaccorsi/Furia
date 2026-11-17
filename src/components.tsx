@@ -136,7 +136,7 @@ export function MatchCard({ match }: { match: Match }) {
       {match.live ? <LiveTag /> : isToday ? <span className="sticker">Hoje!</span> : null}
       <div className="match-card__meta">
         <b>{match.game}</b>
-        <span>· {match.event}</span>
+        <span title={match.event}>· {match.event}</span>
       </div>
       <div className="match-card__teams">
         <div className="team">
