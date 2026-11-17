@@ -1,6 +1,6 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { GAME_LOGO, Game, teamInfo } from '../data'
+import { GAME_LOGO, Game, RESULTS_DAYS, teamInfo } from '../data'
 import { agendaMatches, useMatchData } from '../live'
 import { useMyGames } from '../store'
 import { Button, EmptyState, GameLogo, LiveFlame, LoadingCards, NavHeader, ResultCard } from '../components'
@@ -93,16 +93,19 @@ export default function Agenda() {
       ) : results.length === 0 ? (
         <EmptyState
           art={game ? <img src={GAME_LOGO[game]} alt="" /> : undefined}
-          title={game ? `Ainda sem resultados de ${game}` : 'Ainda sem resultados'}
-          text="Os placares aparecem aqui assim que as partidas terminam."
+          title={game ? `Sem resultados de ${game}` : 'Sem resultados recentes'}
+          text={`A FURIA não jogou ${game ? `${game} ` : ''}nos últimos ${RESULTS_DAYS} dias. Os placares aparecem aqui assim que as partidas terminam.`}
           actions={<Button variant="secondary" onClick={() => set('aba', null)}>{game ? `Ver próximos jogos de ${game}` : 'Ver próximos jogos'}</Button>}
         />
       ) : (
+        <>
+        <p className="section-note">Partidas dos últimos {RESULTS_DAYS} dias, da mais recente para a mais antiga.</p>
         <div className="grid-2">
           {results.map((r) => (
             <ResultCard key={r.id} result={r} />
           ))}
         </div>
+        </>
       )}
     </>
   )

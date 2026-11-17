@@ -5,6 +5,9 @@
 export const config = { runtime: 'edge' }
 
 const API = 'https://api.pandascore.co'
+/** Janela dos resultados: partidas que começaram nos últimos N dias. */
+const RESULTS_DAYS = 45
+// Busca as 100 partidas mais recentes e filtra pela data aqui (mais que suficiente para 45 dias).
 // jogo do site -> slug da PandaScore. Pela documentação, o CS2 usa o prefixo
 // /csgo/ ("All Counter-Strike endpoints use the /csgo/ prefix for legacy reasons").
 const GAMES: Record<'CS2' | 'LoL' | 'Valorant', string> = { CS2: 'csgo', LoL: 'lol', Valorant: 'valorant' }
@@ -105,7 +108,10 @@ export default async function handler() {
         const found = await furiaTeam(slug, token)
         let team = found.team
         let source = 'teams'
-        const pastOf = (id: number) => ps<PSMatch[]>(`/${slug}/matches/past?filter[opponent_id]=${id}&per_page=6&sort=-begin_at`, token)
+        const since = new Date(Date.now() - RESULTS_DAYS * 86_400_000)
+        const recent = (m: PSMatch) => Date.parse(m.begin_at ?? m.scheduled_at ?? '') >= since.getTime()
+        const pastOf = (id: number) =>
+          ps<PSMatch[]>(`/${slug}/matches/past?filter[opponent_id]=${id}&per_page=100&sort=-begin_at`, token).then((ms) => ms.filter(recent))
         let past = team ? await pastOf(team.id) : []
         // Se o cadastro achado não tem partidas, tenta descobrir o time pelas partidas recentes.
         if (!past.length) {
@@ -130,8 +136,8 @@ export default async function handler() {
         let via = 'filter[opponent_id]'
         // Reserva: partidas com "FURIA" no nome, ficando só com as que têm este time.
         if (!done.length) {
-          const byName = await ps<PSMatch[]>(`/${slug}/matches/past?search[name]=FURIA&per_page=50&sort=-begin_at`, token)
-          done = byName.filter((m) => m.opponents.some((o) => o.opponent.id === id) && finished(m)).slice(0, 6)
+          const byName = await ps<PSMatch[]>(`/${slug}/matches/past?search[name]=FURIA&per_page=100&sort=-begin_at`, token)
+          done = byName.filter((m) => m.opponents.some((o) => o.opponent.id === id) && finished(m) && recent(m))
           via = 'search[name]'
           debug[game] = {
             filterCount: past.length,
@@ -140,7 +146,7 @@ export default async function handler() {
             searchOpponents: [...new Set(byName.flatMap((m) => m.opponents.map((o) => `${o.opponent.name} #${o.opponent.id}`)))].filter((n) => /furia/i.test(n)),
           }
         }
-        if (!done.length) errors.push(`Sem resultados de ${game} para o time ${team.name} (#${team.id}) via ${via}`)
+        if (!done.length) errors.push(`Sem resultados de ${game} nos últimos ${RESULTS_DAYS} dias para o time ${team.name} (#${team.id}) via ${via}`)
         results.push(...done.map((m) => normalize(m, game, id)))
       } catch (e) {
         errors.push(String((e as Error).message))
@@ -150,7 +156,7 @@ export default async function handler() {
 
   upcoming.sort((a, b) => (a.startAt ?? 0) - (b.startAt ?? 0))
   results.sort((a, b) => (b.startAt ?? 0) - (a.startAt ?? 0))
-  return json({ updatedAt: new Date().toISOString(), teams, upcoming, results, errors, debug }, 200)
+  return json({ updatedAt: new Date().toISOString(), resultsDays: RESULTS_DAYS, teams, upcoming, results, errors, debug }, 200)
 }
 
 function json(body: unknown, status: number) {

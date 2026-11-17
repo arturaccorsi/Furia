@@ -1,6 +1,6 @@
 import { useRef, useState } from 'react'
 import { ArrowRight } from 'lucide-react'
-import { ACHIEVEMENTS, MATCHES } from '../data'
+import { ACHIEVEMENTS, MATCHES, RESULTS_DAYS } from '../data'
 import { useMatchData } from '../live'
 import { AchievementBadge, AppHeader, Button, Carousel, Divider, EmptyState, LoadingCards, MatchCard, ResultCard, Section } from '../components'
 import { useMyGames, useStore } from '../store'
@@ -15,7 +15,7 @@ export default function Home() {
   const upcoming = [...MATCHES]
     .filter((m) => mine.includes(m.game))
     .sort((a, b) => Number(!!b.live) - Number(!!a.live) || matchStart(a) - matchStart(b) || rank(a.game) - rank(b.game))
-  const myResults = RESULTS.filter((r) => mine.includes(r.game))
+  const myResults = RESULTS.filter((r) => mine.includes(r.game)).slice(0, 10)
   const today = upcoming.filter((m) => new Date(matchStart(m)).toDateString() === new Date().toDateString())
   const live = upcoming.filter((m) => m.live).length
 
@@ -62,6 +62,7 @@ export default function Home() {
       <Divider />
 
       <Section title="Resultados" link={{ to: '/agenda?aba=resultados', label: 'Ver todos' }}>
+        <p className="section-note">Partidas da FURIA nos últimos {RESULTS_DAYS} dias.</p>
         {source === 'loading' ? (
           <LoadingCards n={3} />
         ) : source === 'error' ? (
