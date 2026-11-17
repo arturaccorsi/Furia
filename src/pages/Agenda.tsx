@@ -1,10 +1,19 @@
 import { Link, useSearchParams } from 'react-router-dom'
 import { ChevronRight } from 'lucide-react'
-import { GAME_LOGO, Game, RESULTS_DAYS, teamInfo } from '../data'
+import { GAME_LOGO, Game, RESULTS_DAYS, Result, teamInfo } from '../data'
 import { agendaMatches, useMatchData } from '../live'
 import { useMyGames } from '../store'
-import { Button, EmptyState, GameLogo, LiveFlame, LoadingCards, NavHeader, ResultCard } from '../components'
+import { Button, EmptyState, GameLogo, LiveFlame, LoadingCards, NavHeader, ResultCard, splitEvent } from '../components'
 import { fmtDay, fmtTime, matchStart } from '../time'
+
+function groupByEvent(results: Result[]) {
+  const groups = new Map<string, { r: Result; stage: string }[]>()
+  for (const r of results) {
+    const [event, stage] = splitEvent(r.event)
+    groups.set(event, [...(groups.get(event) ?? []), { r, stage }])
+  }
+  return [...groups.entries()]
+}
 
 export default function Agenda() {
   const [params, setParams] = useSearchParams()
@@ -100,11 +109,25 @@ export default function Agenda() {
       ) : (
         <>
         <p className="section-note">Partidas dos últimos {RESULTS_DAYS} dias, da mais recente para a mais antiga.</p>
-        <div className="grid-2">
-          {results.map((r) => (
-            <ResultCard key={r.id} result={r} />
-          ))}
-        </div>
+        {game ? (
+          // Com um jogo filtrado, agrupa por campeonato: o nome vira subtítulo e o card mostra só a fase.
+          groupByEvent(results).map(([event, list]) => (
+            <div key={event} className="stack result-group">
+              <h3 className="result-group__title">{event}</h3>
+              <div className="grid-2">
+                {list.map(({ r, stage }) => (
+                  <ResultCard key={r.id} result={r} sub={stage || ' '} />
+                ))}
+              </div>
+            </div>
+          ))
+        ) : (
+          <div className="grid-2">
+            {results.map((r) => (
+              <ResultCard key={r.id} result={r} />
+            ))}
+          </div>
+        )}
         </>
       )}
     </>
