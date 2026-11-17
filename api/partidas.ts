@@ -62,6 +62,15 @@ async function furiaFromMatches(slug: string, token: string): Promise<PSTeam | n
   return [...count.values()].sort((a, b) => b.n - a.n)[0]?.t ?? null
 }
 
+/** Nome curto para caber no card: "Team Falcons" -> "Falcons", "paiN Gaming" -> "paiN". */
+export function shortTeamName(name: string) {
+  const short = name
+    .replace(/^team\s+/i, '')
+    .replace(/\s+(esports?|e-sports|gaming|club|gg)$/i, '')
+    .trim()
+  return short || name
+}
+
 function normalize(m: PSMatch, game: string, furia: number) {
   const opp = m.opponents.map((o) => o.opponent).find((t) => t.id !== furia)
   const score = (id?: number) => m.results.find((r) => r.team_id === id)?.score ?? 0
@@ -71,7 +80,7 @@ function normalize(m: PSMatch, game: string, furia: number) {
     id: `ps-${m.id}`,
     game,
     event,
-    opponent: { name: opp?.name || opp?.acronym || 'A definir', logo: opp?.image_url ?? undefined },
+    opponent: { name: opp?.name ? shortTeamName(opp.name) : opp?.acronym || 'A definir', logo: opp?.image_url ?? undefined },
     format: `MD${m.number_of_games}`,
     startAt: Date.parse(m.begin_at ?? m.scheduled_at ?? '') || null,
     status: m.status,

@@ -272,7 +272,9 @@ small { font-size: 12px; font-weight: 600; line-height: 1.35; display: block; }
 .timer__unit b { font: 700 24px/1 var(--f-mono); }
 .timer__unit small { font: 700 11px/1 var(--f-mono); text-transform: uppercase; color: var(--muted); }
 
-.result-card { width: 160px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.result-card { width: 184px; padding: 12px; display: flex; flex-direction: column; gap: 6px; }
+.result-card .heading { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.result-card > small { margin-top: auto; }
 .result-card__top { display: flex; justify-content: space-between; align-items: center; }
 .result-card__logos { display: flex; align-items: center; gap: 6px; color: var(--muted); font: 700 11px/1 var(--f-mono); }
 
