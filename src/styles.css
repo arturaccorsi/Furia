@@ -501,3 +501,9 @@ select.input { appearance: none; background: var(--white) url("data:image/svg+xm
 .support-drop { width: auto; max-width: none; min-height: 200px; }
 .support-drop .banner__text { width: 60%; }
 .support-drop .banner__art { width: 46%; right: -8px; }
+
+.section-note { margin-top: -6px; font: 600 12px/1.35 var(--f-body); color: var(--muted); }
+
+.result-group { gap: 10px; }
+.result-group + .result-group { margin-top: 8px; }
+.result-group__title { margin: 0; padding-bottom: 6px; border-bottom: 2px solid var(--ink); font: 800 16px/1.25 var(--f-body); }

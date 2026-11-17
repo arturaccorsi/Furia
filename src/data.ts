@@ -86,6 +86,9 @@ export const MATCHES: Match[] = [
   { id: 'val-sen-vct', game: 'Valorant', event: 'VCT Americas · Final', opponent: 'sentinels', format: 'MD5', at: { day: 4, time: '20:00' }, crowdPick: 47 },
 ]
 
+/** Janela dos resultados vindos da PandaScore (igual à de api/partidas.ts). */
+export const RESULTS_DAYS = 45
+
 export type Result = { id: string; game: Game; opponent: TeamRef; score: [number, number]; event: string }
 
 export const RESULTS: Result[] = [

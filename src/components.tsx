@@ -190,7 +190,14 @@ export function MatchCard({ match }: { match: Match }) {
     </article>
   )
 }
-export function ResultCard({ result }: { result: Result }) {
+/** Separa o campeonato da fase: "BLAST Rivals · Fall 2026 · Playoffs" -> ["BLAST Rivals · Fall 2026", "Playoffs"]. */
+export function splitEvent(event: string): [string, string] {
+  const parts = event.split(' · ').filter(Boolean)
+  return parts.length >= 3 ? [parts.slice(0, -1).join(' · '), parts[parts.length - 1]] : [event, '']
+}
+
+/** `sub` troca a linha de baixo (ex.: só a fase, quando o campeonato já está no título do grupo). */
+export function ResultCard({ result, sub }: { result: Result; sub?: string }) {
   const win = result.score[0] > result.score[1]
   return (
     <article className="card result-card">
@@ -205,7 +212,7 @@ export function ResultCard({ result }: { result: Result }) {
       </div>
       <b className="heading">vs {teamInfo(result.opponent).name}</b>
       <b className="mono-score">{result.score[0]} : {result.score[1]}</b>
-      <small className="muted">{result.event}</small>
+      <small className="muted">{sub ?? result.event}</small>
     </article>
   )
 }
