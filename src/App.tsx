@@ -1,6 +1,6 @@
 import { ReactNode, useEffect } from 'react'
 import { Navigate, Route, Routes, useLocation } from 'react-router-dom'
-import { TabBar } from './components'
+import { DesktopAside, TabBar } from './components'
 import { useStore } from './store'
 import Welcome from './pages/Welcome'
 import Home from './pages/Home'
@@ -41,6 +41,8 @@ export default function App() {
     </RequireName>
   )
   return (
+    <>
+    <DesktopAside />
     <div className="app">
       <ScrollToTop />
       <Routes>
@@ -55,5 +57,6 @@ export default function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </div>
+    </>
   )
 }

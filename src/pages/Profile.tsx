@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { Bell, ChevronRight, CircleHelp, Gamepad2, LogOut, Pencil } from 'lucide-react'
 import { ACHIEVEMENTS, ACHIEVEMENTS_TOTAL, MODALITIES, WAYS_TO_EARN } from '../data'
-import { AchievementBadge, Button, LevelCard, ModalityGrid, Section, Sheet } from '../components'
+import { AchievementBadge, Button, FanDisclaimer, LevelCard, ModalityGrid, Section, Sheet } from '../components'
 import { actions, useStore } from '../store'
 
 const BENEFITS = [
@@ -105,6 +105,8 @@ export default function Profile() {
           </button>
         </div>
       </Section>
+
+      <FanDisclaimer />
 
       <Sheet open={help} onClose={() => setHelp(false)} title="Como ganhar pontos">
         <p className="body muted">Os pontos sobem seu nível e liberam benefícios.</p>
