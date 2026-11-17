@@ -2,7 +2,7 @@ import { FormEvent, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { actions } from '../store'
 import { MODALITIES, PREFERRED_GAMES } from '../data'
-import { Button, ModalityGrid } from '../components'
+import { Button, FanDisclaimer, ModalityGrid } from '../components'
 
 export default function Welcome() {
   const [name, setName] = useState('')
@@ -25,6 +25,7 @@ export default function Welcome() {
       <img src="/img/furia-horizontal.webp" alt="FURIA" className="welcome__logo" />
       <h1 className="display-xl">Bem-vindo, torcedor!</h1>
       <p className="muted">Acompanhe a FURIA, dê palpites e suba de nível. É de graça.</p>
+      <FanDisclaimer />
 
       <label className="field">
         <span className="mono-label muted">Como a gente te chama?</span>

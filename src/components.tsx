@@ -443,3 +443,38 @@ export function LoadingCards({ n = 2 }: { n?: number }) {
     </div>
   )
 }
+
+export const FIGMA_URL = 'https://www.figma.com/design/ZP0x8vcXrzv54xKzLcg5EM/FURIA-S%C3%B3cio-Torcedor-%E2%80%94-Home'
+export const GITHUB_URL = 'https://github.com/arturaccorsi/Furia'
+
+/** Aviso de projeto não oficial (fã / estudo). */
+export function FanDisclaimer({ compact }: { compact?: boolean }) {
+  return (
+    <p className={`fan-note${compact ? ' fan-note--compact' : ''}`}>
+      Projeto de fã, sem vínculo com a FURIA. Feito para estudo; marcas e imagens pertencem aos seus donos.
+    </p>
+  )
+}
+
+/** Painel lateral que só aparece em telas grandes (quem abre pelo computador). */
+export function DesktopAside() {
+  return (
+    <aside className="desktop-aside" aria-label="Sobre o projeto">
+      <img src="/img/furia-horizontal.webp" alt="" className="desktop-aside__logo" />
+      <h2 className="display-l">App da torcida</h2>
+      <p className="body muted">Estudo de produto e design: do Figma ao site no ar, com resultados reais da PandaScore e palpites salvos no Supabase.</p>
+      <div className="desktop-aside__qr">
+        <img src="/qr-site.svg" alt="QR code para abrir o site no celular" />
+        <span>
+          <b className="body-bold">Melhor no celular</b>
+          <small className="muted">Aponte a câmera para abrir</small>
+        </span>
+      </div>
+      <div className="desktop-aside__links">
+        <a href={FIGMA_URL} target="_blank" rel="noreferrer" className="shop-link">Figma <ArrowUpRight size={16} strokeWidth={2.6} /></a>
+        <a href={GITHUB_URL} target="_blank" rel="noreferrer" className="shop-link">GitHub <ArrowUpRight size={16} strokeWidth={2.6} /></a>
+      </div>
+      <FanDisclaimer compact />
+    </aside>
+  )
+}
