@@ -197,5 +197,8 @@ export const TIMELINE: TimelineItem[] = [
   { kind: 'atual', date: '25 nov – 13 dez 2026', title: 'Major de Singapura', body: 'A Última Aula do Professor: o último campeonato da carreira.', art: '/img/despedida.webp' },
 ]
 
-/** Fim da carreira do FalleN, para o contador do hero. */
-export const RETIREMENT_DATE = new Date('2026-12-31T23:59:59-03:00')
+/**
+ * Data da aposentadoria do FalleN, para o contador do hero.
+ * Em 22/10/2026 ele tuitou que faltavam 59 dias: 22/10 + 59 = 20/12/2026.
+ */
+export const RETIREMENT_DATE = new Date('2026-12-20T00:00:00-03:00')

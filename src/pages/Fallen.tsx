@@ -6,14 +6,11 @@ import { useNow } from '../time'
 import SuggestionSheet from './SuggestionSheet'
 
 export default function Fallen() {
-  const now = useNow()
+  const now = useNow(60_000)
   const [suggest, setSuggest] = useState(false)
   const left = Math.max(0, RETIREMENT_DATE.getTime() - now)
-  const days = Math.floor(left / 86_400_000)
-  const h = Math.floor((left % 86_400_000) / 3_600_000)
-  const m = Math.floor((left % 3_600_000) / 60_000)
-  const s = Math.floor((left % 60_000) / 1000)
-  const p = (n: number) => String(n).padStart(2, '0')
+  // dias que faltam, contando o dia de hoje (atualiza sozinho a cada minuto)
+  const days = Math.ceil(left / 86_400_000)
 
   return (
     <>
@@ -24,9 +21,8 @@ export default function Fallen() {
         <b className="body-bold">Gabriel “FalleN” Toledo</b>
         <p className="caption">Reviva a carreira que ensinou o Brasil a jogar.</p>
         <div className="fallen-hero__count">
-          <span><b className="mono-2xl">{days}</b> <span className="display-l">dias</span></span>
+          <span><b className="mono-2xl">{days}</b> <span className="display-l">{days === 1 ? 'dia' : 'dias'}</span></span>
           <span className="mono-label">para o Professor se aposentar</span>
-          <span className="mono-label live-line"><i /> {p(h)}h {p(m)}min {p(s)}s · contagem ao vivo</span>
         </div>
         <div className="fallen-hero__stats">
           {[
