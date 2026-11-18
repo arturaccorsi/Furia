@@ -17,8 +17,8 @@
   --border: 2.5px solid var(--ink);
   --shadow-2: 2px 2px 0 var(--ink);
   --shadow-4: 4px 4px 0 var(--ink);
-  --f-display: 'New Rocker', 'Grenze Gotisch', serif;
-  --f-ribbon: 'Grenze Gotisch', serif;
+  --f-display: 'Pirata One', serif;
+  --f-ribbon: 'Pirata One', serif;
   --f-body: 'Archivo', system-ui, sans-serif;
   --f-mono: 'Space Mono', ui-monospace, monospace;
   --gutter: 16px;
@@ -175,7 +175,7 @@ small { font-size: 12px; font-weight: 600; line-height: 1.35; display: block; }
   border: var(--border); border-radius: 4px; box-shadow: var(--shadow-2);
 }
 .tag-live { background: var(--red); color: var(--white); font: 700 11px/1.2 var(--f-mono); letter-spacing: .06em; text-transform: uppercase; }
-.sticker { background: var(--yellow); color: var(--ink); font: 700 16px/1 var(--f-ribbon); transform: rotate(-4deg); }
+.sticker { background: var(--yellow); color: var(--ink); font: 400 16px/1 var(--f-ribbon); transform: rotate(-4deg); }
 .sticker--static { position: static; transform: rotate(-3deg); align-self: center; }
 .tag-ink, .tag-yellow, .tag-red, .tag-cream, .tag-closed {
   display: inline-flex; align-items: center; gap: 5px; align-self: flex-start;
@@ -200,7 +200,7 @@ small { font-size: 12px; font-weight: 600; line-height: 1.35; display: block; }
 .ribbon {
   position: relative; display: inline-block; margin: 0 0 0 0;
   padding: 6px 20px 7px; background: var(--ink); color: var(--cream);
-  font: 700 16px/1 var(--f-ribbon); letter-spacing: .02em;
+  font: 400 16px/1 var(--f-ribbon); letter-spacing: .02em;
   clip-path: polygon(0 0, 100% 0, calc(100% - 10px) 50%, 100% 100%, 0 100%, 10px 50%);
 }
 .section-header__link { display: inline-flex; align-items: center; gap: 4px; font: 700 13px/1 var(--f-body); white-space: nowrap; }
