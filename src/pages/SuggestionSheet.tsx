@@ -7,6 +7,11 @@ import { supabase } from '../supabase'
 
 const KINDS = ['Adição', 'Correção', 'Vídeo ou matéria', 'Outro'] as const
 
+/** Mesmo limite que o banco aplica (supabase/migrations/0003_limite_sugestoes.sql). */
+const LIMIT_PER_HOUR = 3
+const HOUR = 60 * 60 * 1000
+const LIMIT_MSG = 'Você já enviou 3 sugestões na última hora. Valeu pela força! Tente de novo mais tarde.'
+
 const moments = TIMELINE.map((it) => `${it.date} · ${it.kind === 'marco' ? it.text : it.title}`)
 
 /** Aceita links colados sem "https://" (ex.: youtube.com/watch?v=…). */
@@ -29,7 +34,9 @@ export default function SuggestionSheet({ open, onClose }: { open: boolean; onCl
   const [sent, setSent] = useState(false)
   const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const { name } = useStore()
+  const { name, deviceId, suggestions } = useStore()
+  const recent = suggestions.filter((x) => Date.now() - new Date(x.at).getTime() < HOUR)
+  const limited = recent.length >= LIMIT_PER_HOUR
   const url = normalizeUrl(link)
   const linkOk = url !== null
   const valid = text.trim().length >= 10 && linkOk
@@ -48,20 +55,25 @@ export default function SuggestionSheet({ open, onClose }: { open: boolean; onCl
   const submit = async (e: FormEvent) => {
     e.preventDefault()
     if (!valid || sending) return
+    if (limited) {
+      setError(LIMIT_MSG)
+      return
+    }
     const s = { kind, moment, text: text.trim(), link: url ?? '', at: new Date().toISOString() }
     setError(null)
     if (supabase) {
       setSending(true)
-      const { error } = await supabase.from('sugestoes').insert({
-        tipo: s.kind,
-        momento: s.moment || null,
-        texto: s.text,
-        link: s.link || null,
-        nome: name,
+      const { error } = await supabase.rpc('enviar_sugestao', {
+        p_device: deviceId,
+        p_tipo: s.kind,
+        p_momento: s.moment,
+        p_texto: s.text,
+        p_link: s.link,
+        p_nome: name ?? '',
       })
       setSending(false)
       if (error) {
-        setError('Não conseguimos enviar agora. Tente de novo em instantes.')
+        setError(error.message.includes('limite_sugestoes') ? LIMIT_MSG : 'Não conseguimos enviar agora. Tente de novo em instantes.')
         return
       }
     }
@@ -129,8 +141,8 @@ export default function SuggestionSheet({ open, onClose }: { open: boolean; onCl
             {!linkOk && <small className="red">Esse link não parece válido. Confira o endereço do vídeo ou da matéria.</small>}
           </label>
 
-          {error && <small className="red">{error}</small>}
-          <Button full disabled={!valid || sending}>{sending ? 'Enviando…' : 'Enviar sugestão'}</Button>
+          {(error || limited) && <small className="red">{error ?? LIMIT_MSG}</small>}
+          <Button full disabled={!valid || sending || limited}>{sending ? 'Enviando…' : 'Enviar sugestão'}</Button>
         </form>
       )}
     </Sheet>

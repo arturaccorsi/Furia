@@ -34,7 +34,7 @@ npm run build
 
 O site funciona sem Supabase (tudo fica no navegador). Para ligar:
 
-1. No painel do Supabase, abra **SQL Editor** e rode, em ordem, cada arquivo de `supabase/migrations/` (`0001_sugestoes.sql`, `0002_palpites.sql`).
+1. No painel do Supabase, abra **SQL Editor** e rode, em ordem, cada arquivo de `supabase/migrations/` (`0001_sugestoes.sql`, `0002_palpites.sql`, `0003_limite_sugestoes.sql`).
 2. Copie `.env.example` para `.env.local` e preencha `VITE_SUPABASE_URL` e `VITE_SUPABASE_ANON_KEY` (em **Project Settings > API**).
 3. Rode `npm run dev`. As sugestões da história do FalleN vão para a tabela `sugestoes` e os palpites para `palpites` (o "% da torcida" passa a ser real).
 
